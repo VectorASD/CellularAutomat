@@ -1,0 +1,12 @@
+# Assembly artifacts
+*.o
+*.d
+*.a
+main
+
+# Backup files
+*.swp
+*~
+
+# A chessboard
+*.html
