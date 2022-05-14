@@ -3,6 +3,7 @@ LIB_NAME = libyeah
 PROJECT = cellular
 
 CFLAGS = -Wall -Werror -I include -MMD
+LFLAGS = -lglfw -lGL -lGLEW
 TEST_CFLAGS = $(CFLAGS) -I thirdparty
 
 APP_SRC = $(wildcard src/$(PROJECT)/*.c)
@@ -24,7 +25,7 @@ all: $(OBJ) $(APP_PATH)
 -include $(DEPS)
 
 $(APP_PATH): $(APP_OBJ) $(LIB_PATH)
-	gcc $^ -o $@
+	gcc $^ -o $@ $(LFLAGS)
 
 $(LIB_PATH): $(LIB_OBJ)
 	ar rcs $@ $^
