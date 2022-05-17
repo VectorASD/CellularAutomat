@@ -14,23 +14,30 @@ typedef const char *text;
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
     printf("key: %3d   scancode: %2d   action: %d   mode: %2d\n", key, scancode, action, mode);
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GL_TRUE);
+    if (action == GLFW_PRESS) {
+        if (key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, GL_TRUE);
+        if (key == GLFW_KEY_1) glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+        if (key == GLFW_KEY_2) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        if (key == GLFW_KEY_3) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
 }
 
 text vertex_shader_source = R"glsl(
     #version 330 core
     layout (location = 0) in vec3 position;
+    out vec3 pos;
     void main() {
-        gl_Position = vec4(position.x, position.y, position.z, 1);
+        pos = position;
+        gl_Position = vec4(position, 1);
     }
 )glsl";
 
 text fragment_shader_source = R"glsl(
     #version 330 core
-    out vec4 color;
+    in vec3 pos;
+    out vec4 outColor;
     void main() {
-	color = vec4(1, 0.5, 0.2, 1);
+	outColor = vec4(pos.x + 0.5, pos.y + 0.5, 0.5, 1);
     }
 )glsl";
 
@@ -112,22 +119,31 @@ int main(int argc, char *argv[]) {
     glDeleteShader(fragment_shader);
 
     GLfloat vertices[] = {
-        -0.5, -0.5, 0,
+        0.5, 0.5, 0,
         0.5, -0.5, 0,
-        0, 0.5, 0};
+        -0.5, -0.5, 0,
+        -0.5, 0.5, 0};
+    GLuint indices[] = {
+        0, 1, 3,
+        1, 2, 3};
 
-    GLuint VBO;
+    GLuint VBO, VAO, EBO;
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    GLuint VAO;
     glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &EBO);
+
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid *) 0);
     glEnableVertexAttribArray(0);
     glBindVertexArray(0);
+    
+    glPointSize(5);
+    glLineWidth(3);
 
     glClearColor(0, 0.5, 1, 0);
     do {
@@ -136,12 +152,17 @@ int main(int argc, char *argv[]) {
 
         glUseProgram(shader_program);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);
 
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
+
+    glDeleteProgram(shader_program);
+    glDeleteBuffers(1, &VBO);
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &EBO);
 
     glfwTerminate();
 
