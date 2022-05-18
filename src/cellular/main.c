@@ -38,21 +38,29 @@ text vertex_shader_source = R"glsl(
     layout (location = 0) in vec3 position;
     layout (location = 1) in vec3 color;
     out vec3 our_color;
+    out vec3 pos;
     uniform mat4 model;
     uniform mat4 view;
     uniform mat4 projection;
     void main() {
         gl_Position = projection * view * model * vec4(position, 1);
         our_color = color;
+        pos = position;
     }
 )glsl";
 
 text fragment_shader_source = R"glsl(
     #version 330 core
     in vec3 our_color;
+    in vec3 pos;
     out vec4 color;
     void main() {
-	color = vec4(our_color, 1);
+        int edge_x = pos.x < -0.98 || pos.x > 0.98 ? 1 : 0;
+        int edge_y = pos.y < -0.98 || pos.y > 0.98 ? 1 : 0;
+        int edge_z = pos.z < -0.98 || pos.z > 0.98 ? 1 : 0;
+        bool edge = edge_x + edge_y + edge_z >= 2;
+        if (edge) color = vec4(0, 0, 0, 1);
+	else color = vec4(our_color, 1);
     }
 )glsl";
 
@@ -135,15 +143,21 @@ int main(int argc, char *argv[]) {
     GLuint shader_program = build_program(vertex_shader_source, fragment_shader_source);
 
     GLfloat vertices[] = {
-        -0.5, 0.5, 0, 1, 0, 0,
-        0.5, 0.5, 0, 0, 1, 0,
-        -0.5, -0.5, 0, 1, 1, 1,
-        0, -0.5, 0, 0, 0, 1,
-        0.5, -0.5, 0, 1, 1, 0};
+        -1, -1, -1, 1, 0, 0,
+        1, -1, -1, 0, 1, 0,
+        -1, -1, 1, 0, 0, 1,
+        1, -1, 1, 1, 1, 0,
+        -1, 1, -1, 0, 1, 1,
+        1, 1, -1, 1, 0, 1,
+        -1, 1, 1, 1, 1, 1,
+        1, 1, 1, 0, 0, 0};
     GLuint indices[] = {
-        0, 1, 3,
-        0, 2, 3,
-        1, 3, 4};
+        0, 1, 2, 1, 2, 3,
+        0, 1, 4, 1, 4, 5,
+        0, 2, 4, 2, 4, 6,
+        1, 3, 5, 3, 5, 7,
+        2, 3, 6, 3, 6, 7,
+        4, 5, 6, 5, 6, 7}; // Выяснилось, что Z-buffer здесь не завезли
 
     GLuint VBO, VAO, EBO;
     glGenBuffers(1, &VBO);
@@ -184,12 +198,12 @@ int main(int argc, char *argv[]) {
 
         glUseProgram(shader_program);
 
-        float angle = radians(glfwGetTime() * 50);
-        mat4 model = rotate(unit_mat, angle, angles);
+        float angle = radians(glfwGetTime() * 5);
+        mat4 model = rotate(matrix4_new(0.75), angle, angles);
         matrix4_push(model, model_loc);
 
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);
