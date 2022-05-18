@@ -3,7 +3,7 @@ LIB_NAME = libyeah
 PROJECT = cellular
 
 CFLAGS = -Wall -Werror -I include -MMD
-LFLAGS = -lglfw -lGL -lGLEW
+LFLAGS = -lglfw -lGL -lGLEW -lm
 TEST_CFLAGS = $(CFLAGS) -I thirdparty
 
 APP_SRC = $(wildcard src/$(PROJECT)/*.c)

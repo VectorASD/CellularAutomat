@@ -2,6 +2,7 @@
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <matrix.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,7 +11,7 @@ typedef const char *text;
 
 //apt-get install libglew-dev libglfw3-dev libglm-dev
 //Главное в будущем не забыть перенести куда-нибудь в Readme это перед отправкой на проверку
-//LFLAGS = ... -lm -lX11 -lpthread -lXrandr -ldl Возможно в будущем что-то из этого понадобиться...
+//LFLAGS = ... -lX11 -lpthread -lXrandr -ldl Возможно в будущем что-то из этого понадобиться...
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
     printf("key: %3d   scancode: %2d   action: %d   mode: %2d\n", key, scancode, action, mode);
@@ -86,6 +87,8 @@ GLuint build_program(text vertex_shader_source, text fragment_shader_source) {
 
 int main(int argc, char *argv[]) {
     printf("Максимальное число входных переменных шейдера этой GPU: %u\n", GL_MAX_VERTEX_ATTRIBS);
+    
+    matrix4_test();
 
     if (!glfwInit()) {
         printf("Инициализация GLFW провалена\n");
