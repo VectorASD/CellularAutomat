@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
         0, 2, 4, 2, 4, 6,
         1, 3, 5, 3, 5, 7,
         2, 3, 6, 3, 6, 7,
-        4, 5, 6, 5, 6, 7}; // Выяснилось, что Z-buffer здесь не завезли
+        4, 5, 6, 5, 6, 7};
 
     GLuint VBO, VAO, EBO;
     glGenBuffers(1, &VBO);
@@ -178,6 +178,7 @@ int main(int argc, char *argv[]) {
 
     glPointSize(5);
     glLineWidth(3);
+    glEnable(GL_DEPTH_TEST);
 
     GLint projection_loc = glGetUniformLocation(shader_program, "projection");
     GLint view_loc = glGetUniformLocation(shader_program, "view");
@@ -194,11 +195,11 @@ int main(int argc, char *argv[]) {
     glClearColor(0, 0.5, 1, 0);
     do {
         glfwPollEvents();
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(shader_program);
 
-        float angle = radians(glfwGetTime() * 5);
+        float angle = radians(glfwGetTime() * 10);
         mat4 model = rotate(matrix4_new(0.75), angle, angles);
         matrix4_push(model, model_loc);
 
