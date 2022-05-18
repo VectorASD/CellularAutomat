@@ -1,10 +1,11 @@
-#include <math.h> // tan, M_PI, M_PI_2
+#include <GL/glew.h> // GLint, GLfloat, glUniformMatrix4fv
+#include <math.h>    // tan, M_PI, M_PI_2
 #include <matrix.h>
 #include <stdio.h>  // printf
 #include <string.h> // memcpy
 
-// Можно было бы местами использовать циклы, но здесь ценится только скорость
-// Хотел расписать строчки матриц по строкам программы, но увы, clang format в этом плане живёт своей жизнью :/
+// Можно было бы местами использовать циклы, но здесь ценится только скорость из-за огромнейшей нагрузки именно на эти операции
+// Хотел расписать строчки матриц по строкам программы, но увы, clang format в этом плане живёт своей жизнью = настройка подбирается автоматически... не правильно :/
 
 mat4 matrix4_new(float scale) {
     mat4 mat = {{{scale, 0, 0, 0}, {0, scale, 0, 0}, {0, 0, scale, 0}, {0, 0, 0, 1}}};
@@ -103,7 +104,15 @@ void matrix4_test() {
 
     mat4 trans = translate(matrix4_new(1), vector3_new(1, 1, 0));
     vector4_repr(matrix4_mul_v(trans, vector4_new(1, 0, 0, 1)));
-    
+
     mat4 trans2 = rotate(matrix4_new(1), 90, vector3_new(0, 0, 1));
-    matrix4_repr(scale(trans2, vector3_new(0.5, 0.5, 0.5))); 
+    matrix4_repr(scale(trans2, vector3_new(0.5, 0.5, 0.5)));
+
+    vector3_repr(vector3_cross(vector3_new(2, -1, 3), vector3_new(5, 7, -4)));
+}
+
+void matrix4_push(mat4 mat, GLint location) {
+    float(*a)[4] = mat.a;
+    const GLfloat value[] = {a[0][0], a[0][1], a[0][2], a[0][3], a[1][0], a[1][1], a[1][2], a[1][3], a[2][0], a[2][1], a[2][2], a[2][3], a[3][0], a[3][1], a[3][2], a[3][3]};
+    glUniformMatrix4fv(location, 1, GL_TRUE, value);
 }

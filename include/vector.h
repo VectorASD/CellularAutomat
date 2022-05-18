@@ -31,6 +31,8 @@ float vector3_len(vec3 vec);
 vec3 vector3_norm(vec3 vec);
 void vector3_repr(vec3 vec);
 
+vec3 vector3_cross(vec3 a, vec3 b);
+
 
 
 vec4 vector4_new(float x, float y, float z, float w);

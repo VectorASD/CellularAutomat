@@ -28,15 +28,15 @@ text vertex_shader_source = R"glsl(
     layout (location = 0) in vec3 position;
     layout (location = 1) in vec3 color;
     out vec3 our_color;
+    uniform mat4 transform;
     void main() {
-        gl_Position = vec4(position, 1);
+        gl_Position = transform * vec4(position, 1);
         our_color = color;
     }
 )glsl";
 
 text fragment_shader_source = R"glsl(
     #version 330 core
-    uniform int counter;
     in vec3 our_color;
     out vec4 color;
     void main() {
@@ -87,8 +87,6 @@ GLuint build_program(text vertex_shader_source, text fragment_shader_source) {
 
 int main(int argc, char *argv[]) {
     printf("Максимальное число входных переменных шейдера этой GPU: %u\n", GL_MAX_VERTEX_ATTRIBS);
-    
-    matrix4_test();
 
     if (!glfwInit()) {
         printf("Инициализация GLFW провалена\n");
@@ -157,16 +155,19 @@ int main(int argc, char *argv[]) {
     glPointSize(5);
     glLineWidth(3);
 
-    GLint counter_location = glGetUniformLocation(shader_program, "counter");
-    int counter = 0;
-
+    GLint transform_location = glGetUniformLocation(shader_program, "transform");
+    mat4 trans = matrix4_new(1.2);
+    vec3 angles = vector3_norm(vector3_new(0, 0.2, 1));
+    
     glClearColor(0, 0.5, 1, 0);
     do {
         glfwPollEvents();
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shader_program);
-        glUniform1i(counter_location, ++counter);
+        float angle = radians(glfwGetTime() * 50);
+        mat4 inter_mat = rotate(trans, angle, angles);
+        matrix4_push(inter_mat, transform_location);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);

@@ -55,6 +55,11 @@ vec3 vector3_norm(vec3 vec) {
     return vector3_div_s(vec, vector3_len(vec));
 }
 
+vec3 vector3_cross(vec3 a, vec3 b) {
+    vec3 res = {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
+    return res;
+}
+
 void vector3_repr(vec3 vec) {
     printf("Vector3: (%g; %g; %g)\n", vec.x, vec.y, vec.z);
 }

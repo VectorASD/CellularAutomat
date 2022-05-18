@@ -27,3 +27,4 @@ mat4 rotate(mat4 in, float angle, vec3 norm_angles);
 mat4 scale(mat4 in, vec3 scale);
 
 void matrix4_test();
+void matrix4_push(mat4 mat, GLint location);
