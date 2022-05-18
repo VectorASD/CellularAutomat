@@ -9,17 +9,27 @@
 typedef unsigned char byte;
 typedef const char *text;
 
-//apt-get install libglew-dev libglfw3-dev libglm-dev
+//apt-get install libglew-dev libglfw3-dev
 //Главное в будущем не забыть перенести куда-нибудь в Readme это перед отправкой на проверку
 //LFLAGS = ... -lX11 -lpthread -lXrandr -ldl Возможно в будущем что-то из этого понадобиться...
 
+byte polygon_mod = 0;
+const GLenum polygon_modes[] = {GL_FILL, GL_LINE, GL_POINT};
+byte user_input_dbg = 0;
+
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
-    printf("key: %3d   scancode: %2d   action: %d   mode: %2d\n", key, scancode, action, mode);
+    if (user_input_dbg) printf("key: %3d   scancode: %2d   action: %d   mode: %2d\n", key, scancode, action, mode);
     if (action == GLFW_PRESS) {
         if (key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, GL_TRUE);
-        if (key == GLFW_KEY_1) glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-        if (key == GLFW_KEY_2) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        if (key == GLFW_KEY_3) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        if (key == GLFW_KEY_1) {
+            polygon_mod = (polygon_mod + 1) % 3;
+            glPolygonMode(GL_FRONT_AND_BACK, polygon_modes[polygon_mod]);
+        }
+        if (key == GLFW_KEY_2) printf("Максимальное число входных переменных шейдера этой GPU: %u\n", GL_MAX_VERTEX_ATTRIBS);
+        if (key == GLFW_KEY_3) {
+            user_input_dbg = !user_input_dbg;
+            printf("Отладка пользовательского ввода успешно: %s\n", user_input_dbg ? "Активирована" : "Отключена");
+        }
     }
 }
 
@@ -28,9 +38,11 @@ text vertex_shader_source = R"glsl(
     layout (location = 0) in vec3 position;
     layout (location = 1) in vec3 color;
     out vec3 our_color;
-    uniform mat4 transform;
+    uniform mat4 model;
+    uniform mat4 view;
+    uniform mat4 projection;
     void main() {
-        gl_Position = transform * vec4(position, 1);
+        gl_Position = projection * view * model * vec4(position, 1);
         our_color = color;
     }
 )glsl";
@@ -86,8 +98,6 @@ GLuint build_program(text vertex_shader_source, text fragment_shader_source) {
 }
 
 int main(int argc, char *argv[]) {
-    printf("Максимальное число входных переменных шейдера этой GPU: %u\n", GL_MAX_VERTEX_ATTRIBS);
-
     if (!glfwInit()) {
         printf("Инициализация GLFW провалена\n");
         getchar();
@@ -155,19 +165,29 @@ int main(int argc, char *argv[]) {
     glPointSize(5);
     glLineWidth(3);
 
-    GLint transform_location = glGetUniformLocation(shader_program, "transform");
-    mat4 trans = matrix4_new(1.2);
-    vec3 angles = vector3_norm(vector3_new(0, 0.2, 1));
-    
+    GLint projection_loc = glGetUniformLocation(shader_program, "projection");
+    GLint view_loc = glGetUniformLocation(shader_program, "view");
+    GLint model_loc = glGetUniformLocation(shader_program, "model");
+
+    mat4 projection = perspective(radians(45), (float) width / height, 0.1, 100);
+    mat4 view = translate(unit_mat, vector3_new(0, 0, -3));
+
+    glUseProgram(shader_program);
+    matrix4_push(projection, projection_loc);
+    matrix4_push(view, view_loc);
+    vec3 angles = vector3_norm(vector3_new(1, 0.2, 0));
+
     glClearColor(0, 0.5, 1, 0);
     do {
         glfwPollEvents();
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shader_program);
+
         float angle = radians(glfwGetTime() * 50);
-        mat4 inter_mat = rotate(trans, angle, angles);
-        matrix4_push(inter_mat, transform_location);
+        mat4 model = rotate(unit_mat, angle, angles);
+        matrix4_push(model, model_loc);
+
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);

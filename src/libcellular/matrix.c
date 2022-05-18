@@ -63,7 +63,7 @@ float degrees(float radians) {
 
 mat4 perspective(float fovy, float aspect, float near, float far) {
     fovy = ctg(fovy / 2);
-    mat4 mat = {{{fovy / aspect, 0, 0, 0}, {0, fovy, 0, 0}, {0, 0, (far + near) / (far - near), 1}, {0, 0, -2 * far * near / (far - near), 0}}};
+    mat4 mat = {{{fovy / aspect, 0, 0, 0}, {0, fovy, 0, 0}, {0, 0, -(far + near) / (far - near), -2 * far * near / (far - near)}, {0, 0, -1, 0}}};
     return mat;
 }
 
@@ -116,3 +116,5 @@ void matrix4_push(mat4 mat, GLint location) {
     const GLfloat value[] = {a[0][0], a[0][1], a[0][2], a[0][3], a[1][0], a[1][1], a[1][2], a[1][3], a[2][0], a[2][1], a[2][2], a[2][3], a[3][0], a[3][1], a[3][2], a[3][3]};
     glUniformMatrix4fv(location, 1, GL_TRUE, value);
 }
+
+const mat4 unit_mat = {{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}}};
