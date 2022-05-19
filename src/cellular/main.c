@@ -1,11 +1,11 @@
-
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <context.h>
+#include <math.h>
 #include <matrix.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <context.h>
 
 //apt-get install libglew-dev libglfw3-dev
 //Главное в будущем не забыть перенести куда-нибудь в Readme это перед отправкой на проверку
@@ -28,7 +28,29 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             printf("Отладка пользовательского ввода успешно: %s\n", set->user_input_dbg ? "Активирована" : "Отключена");
         }
         ctx->keys[key] = 1;
-    } else if (action == GLFW_RELEASE) ctx->keys[key] = 0;
+    } else if (action == GLFW_RELEASE)
+        ctx->keys[key] = 0;
+    else if (action == GLFW_REPEAT)
+        ctx->keys[key] = 2;
+}
+
+void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
+    struct Context *ctx = glfwGetWindowUserPointer(window);
+    struct Settings *set = &ctx->settings;
+    if (set->user_input_dbg) printf("xpos: %3lg   ypos: %3lg\n", xpos, ypos);
+    struct Camera *camera = &ctx->camera;
+    float dx = xpos - camera->last_x;
+    float dy = camera->last_y - ypos;
+    if (powf(dx * dx + dy * dy, 0.5) > 100) dx = 0, dy = 0;
+    camera->yaw += dx * camera->sensitivity;
+    camera->pitch += dy * camera->sensitivity;
+    camera->last_x = xpos;
+    camera->last_y = ypos;
+
+    if (camera->pitch > 89) camera->pitch = 89;
+    if (camera->pitch < -89) camera->pitch = -89;
+
+    camera->front = vector3_norm(vector3_new(cos(radians(camera->yaw)) * cos(radians(camera->pitch)), sin(radians(camera->pitch)), sin(radians(camera->yaw)) * cos(radians(camera->pitch))));
 }
 
 text vertex_shader_source = R"glsl(
@@ -121,13 +143,14 @@ int main(int argc, char *argv[]) {
         glfwTerminate();
         return 2;
     }
-    
+
     struct Context ctx;
     load_context(&ctx);
     glfwSetWindowUserPointer(window, &ctx);
-    
+
     glfwMakeContextCurrent(window);
     glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
 
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
@@ -198,7 +221,7 @@ int main(int argc, char *argv[]) {
     glClearColor(0, 0.5, 1, 0);
     int pred_sec;
     int frames = 0;
-    
+
     do {
         glfwPollEvents();
         do_movement(&ctx);
@@ -217,8 +240,8 @@ int main(int argc, char *argv[]) {
         float angle = radians(time * 50);
         mat4 model = rotate(matrix4_new(0.5), angle, angles);
         matrix4_push(model, model_loc);
-    	mat4 view = look_at(camera->pos, vector3_add(camera->pos, camera->front), camera->up);
-    	matrix4_push(view, view_loc);
+        mat4 view = look_at(camera->pos, vector3_add(camera->pos, camera->front), camera->up);
+        matrix4_push(view, view_loc);
 
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);

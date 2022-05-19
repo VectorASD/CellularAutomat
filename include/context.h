@@ -15,6 +15,11 @@ struct Camera {
     vec3 front;
     vec3 up;
     float speed;
+    float last_x;
+    float last_y;
+    float yaw;
+    float pitch;
+    float sensitivity;
 };
 
 struct Context {

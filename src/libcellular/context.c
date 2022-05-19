@@ -10,6 +10,11 @@ void load_context(struct Context *ctx) {
     camera->front = vector3_new(0, 0, -1);
     camera->up = vector3_new(0, 1, 0);
     camera->speed = 5;
+    camera->last_x = 0;
+    camera->last_y = 0;
+    camera->yaw = -90;
+    camera->pitch = 0;
+    camera->sensitivity = 0.2;
     for (short i = 0; i < 1024; i++) ctx->keys[i] = 0;
     ctx->delta_time = 0;
     ctx->last_frame_time = 0;
