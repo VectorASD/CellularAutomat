@@ -60,6 +60,10 @@ vec3 vector3_cross(vec3 a, vec3 b) {
     return res;
 }
 
+float vector3_dot(vec3 a, vec3 b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
 void vector3_repr(vec3 vec) {
     printf("Vector3: (%g; %g; %g)\n", vec.x, vec.y, vec.z);
 }

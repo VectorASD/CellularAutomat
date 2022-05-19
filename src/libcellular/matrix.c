@@ -109,6 +109,8 @@ void matrix4_test() {
     matrix4_repr(scale(trans2, vector3_new(0.5, 0.5, 0.5)));
 
     vector3_repr(vector3_cross(vector3_new(2, -1, 3), vector3_new(5, 7, -4)));
+
+    matrix4_repr(look_at(vector3_new(10, 2, 3), vector3_new(2, 3, 4), vector3_new(0, 1, 0)));
 }
 
 void matrix4_push(mat4 mat, GLint location) {
@@ -118,3 +120,11 @@ void matrix4_push(mat4 mat, GLint location) {
 }
 
 const mat4 unit_mat = {{{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}}};
+
+mat4 look_at(vec3 eye, vec3 center, vec3 up) {
+    vec3 z = vector3_norm(vector3_sub(eye, center));
+    vec3 x = vector3_norm(vector3_cross(up, z));
+    vec3 y = vector3_norm(vector3_cross(z, x));
+    mat4 mat = {{{x.x, x.y, x.z, -vector3_dot(x, eye)}, {y.x, y.y, y.z, -vector3_dot(y, eye)}, {z.x, z.y, z.z, -vector3_dot(z, eye)}, {0, 0, 0, 1}}};
+    return mat;
+}

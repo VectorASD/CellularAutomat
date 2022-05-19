@@ -30,3 +30,5 @@ void matrix4_test();
 void matrix4_push(mat4 mat, GLint location);
 
 extern const mat4 unit_mat;
+
+mat4 look_at(vec3 eye, vec3 center, vec3 up);

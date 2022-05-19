@@ -5,32 +5,30 @@
 #include <matrix.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-typedef unsigned char byte;
-typedef const char *text;
+#include <context.h>
 
 //apt-get install libglew-dev libglfw3-dev
 //Главное в будущем не забыть перенести куда-нибудь в Readme это перед отправкой на проверку
 //LFLAGS = ... -lX11 -lpthread -lXrandr -ldl Возможно в будущем что-то из этого понадобиться...
 
-byte polygon_mod = 0;
-const GLenum polygon_modes[] = {GL_FILL, GL_LINE, GL_POINT};
-byte user_input_dbg = 0;
-
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
-    if (user_input_dbg) printf("key: %3d   scancode: %2d   action: %d   mode: %2d\n", key, scancode, action, mode);
+    struct Context *ctx = glfwGetWindowUserPointer(window);
+    struct Settings *set = &ctx->settings;
+    if (set->user_input_dbg) printf("key: %3d   scancode: %2d   action: %d   mode: %2d\n", key, scancode, action, mode);
     if (action == GLFW_PRESS) {
         if (key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, GL_TRUE);
         if (key == GLFW_KEY_1) {
-            polygon_mod = (polygon_mod + 1) % 3;
-            glPolygonMode(GL_FRONT_AND_BACK, polygon_modes[polygon_mod]);
+            set->polygon_mod = (set->polygon_mod + 1) % 3;
+            const GLenum polygon_modes[] = {GL_FILL, GL_LINE, GL_POINT};
+            glPolygonMode(GL_FRONT_AND_BACK, polygon_modes[set->polygon_mod]);
         }
         if (key == GLFW_KEY_2) printf("Максимальное число входных переменных шейдера этой GPU: %u\n", GL_MAX_VERTEX_ATTRIBS);
         if (key == GLFW_KEY_3) {
-            user_input_dbg = !user_input_dbg;
-            printf("Отладка пользовательского ввода успешно: %s\n", user_input_dbg ? "Активирована" : "Отключена");
+            set->user_input_dbg = !set->user_input_dbg;
+            printf("Отладка пользовательского ввода успешно: %s\n", set->user_input_dbg ? "Активирована" : "Отключена");
         }
-    }
+        ctx->keys[key] = 1;
+    } else if (action == GLFW_RELEASE) ctx->keys[key] = 0;
 }
 
 text vertex_shader_source = R"glsl(
@@ -123,6 +121,11 @@ int main(int argc, char *argv[]) {
         glfwTerminate();
         return 2;
     }
+    
+    struct Context ctx;
+    load_context(&ctx);
+    glfwSetWindowUserPointer(window, &ctx);
+    
     glfwMakeContextCurrent(window);
     glfwSetKeyCallback(window, key_callback);
 
@@ -185,30 +188,44 @@ int main(int argc, char *argv[]) {
     GLint model_loc = glGetUniformLocation(shader_program, "model");
 
     mat4 projection = perspective(radians(45), (float) width / height, 0.1, 100);
-    mat4 view = translate(unit_mat, vector3_new(0, 0, -3));
+    //mat4 view = translate(unit_mat, vector3_new(0, 0, -5));
+    struct Camera *camera = &ctx.camera;
 
     glUseProgram(shader_program);
     matrix4_push(projection, projection_loc);
-    matrix4_push(view, view_loc);
     vec3 angles = vector3_norm(vector3_new(1, 0.2, 0));
 
     glClearColor(0, 0.5, 1, 0);
+    int pred_sec;
+    int frames = 0;
+    
     do {
         glfwPollEvents();
+        do_movement(&ctx);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        float time = glfwGetTime();
+        ctx.delta_time = time - ctx.last_frame_time;
+        ctx.last_frame_time = time;
+        if ((int) time != pred_sec) {
+            pred_sec = time;
+            printf("time: %2u   fps: %u\n", pred_sec, frames);
+            frames = 0;
+        }
         glUseProgram(shader_program);
 
-        float angle = radians(glfwGetTime() * 10);
-        mat4 model = rotate(matrix4_new(0.75), angle, angles);
+        float angle = radians(time * 50);
+        mat4 model = rotate(matrix4_new(0.5), angle, angles);
         matrix4_push(model, model_loc);
+    	mat4 view = look_at(camera->pos, vector3_add(camera->pos, camera->front), camera->up);
+    	matrix4_push(view, view_loc);
 
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);
-
+        frames++;
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
 
     glDeleteProgram(shader_program);
