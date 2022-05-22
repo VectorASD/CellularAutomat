@@ -1,7 +1,12 @@
 #pragma once
 
+typedef struct Vector3 vec2;
 typedef struct Vector3 vec3;
 typedef struct Vector4 vec4;
+
+struct Vector2 {
+    float x, y;
+};
 
 struct Vector3 {
     float x, y, z;
@@ -10,6 +15,28 @@ struct Vector3 {
 struct Vector4 {
     float x, y, z, w;
 };
+
+
+
+vec2 vector2_new(float x, float y);
+
+vec2 vector2_add(vec2 a, vec2 b);
+vec2 vector2_add_s(vec2 a, float scale);
+
+vec2 vector2_sub(vec2 a, vec2 b);
+vec2 vector2_sub_s(vec2 a, float scale);
+
+vec2 vector2_mul(vec2 a, vec2 b);
+vec2 vector2_mul_s(vec2 a, float scale);
+
+vec2 vector2_div(vec2 a, vec2 b);
+vec2 vector2_div_s(vec2 a, float scale);
+
+float vector2_len(vec2 vec);
+vec2 vector2_norm(vec2 vec);
+void vector2_repr(vec2 vec);
+
+float vector2_dot(vec2 a, vec2 b);
 
 
 
@@ -53,3 +80,5 @@ vec4 vector4_div_s(vec4 a, float scale);
 float vector4_len(vec4 vec);
 vec4 vector4_norm(vec4 vec);
 void vector4_repr(vec4 vec);
+
+float vector4_dot(vec4 a, vec4 b);

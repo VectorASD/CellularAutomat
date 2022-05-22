@@ -2,7 +2,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <context.h>
-#include <math.h>
 #include <matrix.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,48 +9,6 @@
 //apt-get install libglew-dev libglfw3-dev
 //Главное в будущем не забыть перенести куда-нибудь в Readme это перед отправкой на проверку
 //LFLAGS = ... -lX11 -lpthread -lXrandr -ldl Возможно в будущем что-то из этого понадобиться...
-
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
-    struct Context *ctx = glfwGetWindowUserPointer(window);
-    struct Settings *set = &ctx->settings;
-    if (set->user_input_dbg) printf("key: %3d   scancode: %2d   action: %d   mode: %2d\n", key, scancode, action, mode);
-    if (action == GLFW_PRESS) {
-        if (key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, GL_TRUE);
-        if (key == GLFW_KEY_1) {
-            set->polygon_mod = (set->polygon_mod + 1) % 3;
-            const GLenum polygon_modes[] = {GL_FILL, GL_LINE, GL_POINT};
-            glPolygonMode(GL_FRONT_AND_BACK, polygon_modes[set->polygon_mod]);
-        }
-        if (key == GLFW_KEY_2) printf("Максимальное число входных переменных шейдера этой GPU: %u\n", GL_MAX_VERTEX_ATTRIBS);
-        if (key == GLFW_KEY_3) {
-            set->user_input_dbg = !set->user_input_dbg;
-            printf("Отладка пользовательского ввода успешно: %s\n", set->user_input_dbg ? "Активирована" : "Отключена");
-        }
-        ctx->keys[key] = 1;
-    } else if (action == GLFW_RELEASE)
-        ctx->keys[key] = 0;
-    else if (action == GLFW_REPEAT)
-        ctx->keys[key] = 2;
-}
-
-void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
-    struct Context *ctx = glfwGetWindowUserPointer(window);
-    struct Settings *set = &ctx->settings;
-    if (set->user_input_dbg) printf("xpos: %3lg   ypos: %3lg\n", xpos, ypos);
-    struct Camera *camera = &ctx->camera;
-    float dx = xpos - camera->last_x;
-    float dy = camera->last_y - ypos;
-    if (powf(dx * dx + dy * dy, 0.5) > 100) dx = 0, dy = 0;
-    camera->yaw += dx * camera->sensitivity;
-    camera->pitch += dy * camera->sensitivity;
-    camera->last_x = xpos;
-    camera->last_y = ypos;
-
-    if (camera->pitch > 89) camera->pitch = 89;
-    if (camera->pitch < -89) camera->pitch = -89;
-
-    camera->front = vector3_norm(vector3_new(cos(radians(camera->yaw)) * cos(radians(camera->pitch)), sin(radians(camera->pitch)), sin(radians(camera->yaw)) * cos(radians(camera->pitch))));
-}
 
 text vertex_shader_source = R"glsl(
     #version 330 core
@@ -151,6 +108,7 @@ int main(int argc, char *argv[]) {
     glfwMakeContextCurrent(window);
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
 
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
@@ -161,10 +119,14 @@ int main(int argc, char *argv[]) {
     }
 
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+    glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    if (glfwRawMouseMotionSupported()) glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
+    ctx.window_size = vector2_new(width, height);
 
     GLuint shader_program = build_program(vertex_shader_source, fragment_shader_source);
 
@@ -206,22 +168,20 @@ int main(int argc, char *argv[]) {
     glLineWidth(3);
     glEnable(GL_DEPTH_TEST);
 
-    GLint projection_loc = glGetUniformLocation(shader_program, "projection");
-    GLint view_loc = glGetUniformLocation(shader_program, "view");
-    GLint model_loc = glGetUniformLocation(shader_program, "model");
-
-    mat4 projection = perspective(radians(45), (float) width / height, 0.1, 100);
-    //mat4 view = translate(unit_mat, vector3_new(0, 0, -5));
-    struct Camera *camera = &ctx.camera;
+    ctx.projection_loc = glGetUniformLocation(shader_program, "projection");
+    ctx.view_loc = glGetUniformLocation(shader_program, "view");
+    ctx.model_loc = glGetUniformLocation(shader_program, "model");
 
     glUseProgram(shader_program);
-    matrix4_push(projection, projection_loc);
+    upd_projection_mat(&ctx);
+    upd_view_mat(&ctx);
+
     vec3 angles = vector3_norm(vector3_new(1, 0.2, 0));
 
-    glClearColor(0, 0.5, 1, 0);
     int pred_sec;
     int frames = 0;
 
+    glClearColor(0, 0.5, 1, 0);
     do {
         glfwPollEvents();
         do_movement(&ctx);
@@ -239,9 +199,7 @@ int main(int argc, char *argv[]) {
 
         float angle = radians(time * 50);
         mat4 model = rotate(matrix4_new(0.5), angle, angles);
-        matrix4_push(model, model_loc);
-        mat4 view = look_at(camera->pos, vector3_add(camera->pos, camera->front), camera->up);
-        matrix4_push(view, view_loc);
+        matrix4_push(model, ctx.model_loc);
 
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
@@ -249,7 +207,7 @@ int main(int argc, char *argv[]) {
 
         glfwSwapBuffers(window);
         frames++;
-    } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
+    } while (glfwWindowShouldClose(window) == 0);
 
     glDeleteProgram(shader_program);
     glDeleteBuffers(1, &VBO);
