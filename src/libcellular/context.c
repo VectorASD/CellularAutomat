@@ -1,4 +1,3 @@
-#include <GLFW/glfw3.h>
 #include <context.h>
 #include <math.h>
 #include <stdio.h>
@@ -20,6 +19,13 @@ void load_context(struct Context *ctx) {
     ctx->delta_time = 0;
     ctx->last_frame_time = 0;
     ctx->lock_mouse_mode = 0;
+    ctx->scenes = NULL;
+    ctx->last_scene = NULL;
+    ctx->current_scene = NULL;
+    ctx->scenes_n = 0;
+    ctx->models = NULL;
+    ctx->last_model = NULL;
+    ctx->models_n = 0;
 }
 
 void upd_projection_mat(struct Context *ctx) {
@@ -108,8 +114,11 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
 
     if (camera->pitch > 89) camera->pitch = 89;
     if (camera->pitch < -89) camera->pitch = -89;
+    
+    float yaw = radians(camera->yaw);
+    float pitch = radians(camera->pitch);
 
-    camera->front = vector3_norm(vector3_new(cos(radians(camera->yaw)) * cos(radians(camera->pitch)), sin(radians(camera->pitch)), sin(radians(camera->yaw)) * cos(radians(camera->pitch))));
+    camera->front = vector3_norm(vector3_new(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch)));
 
     upd_view_mat(ctx);
 

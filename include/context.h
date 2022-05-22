@@ -3,6 +3,9 @@
 #include <matrix.h>
 
 typedef unsigned char byte;
+typedef unsigned short ushort;
+typedef unsigned int uint;
+typedef unsigned long int ulong;
 typedef const char *text;
 
 struct Settings {
@@ -21,6 +24,28 @@ struct Camera {
     vec2 last_cursor_pos;
 };
 
+struct Model {
+    struct Model *next;
+    GLuint VBO; //Vertex Buffer Object
+    GLuint VAO; //Vertex Array Object
+    GLuint EBO; //Elements Buffer Object
+    text name;
+};
+
+struct Part {
+    struct Part *next;
+    mat4 model;
+    vec3 pos;
+    vec3 orientation;
+};
+
+struct Scene {
+    struct Scene *next;
+    struct Model *used_model;
+    struct Part *parts;
+    int parts_n;
+};
+
 struct Context {
     struct Settings settings;
     struct Camera camera;
@@ -32,6 +57,13 @@ struct Context {
     GLint model_loc;
     vec2 window_size;
     byte lock_mouse_mode;
+    struct Scene *scenes;
+    struct Scene *last_scene;
+    struct Scene *current_scene;
+    int scenes_n;
+    struct Model *models;
+    struct Model *last_model;
+    int models_n;
 };
 
 void load_context(struct Context *ctx);
