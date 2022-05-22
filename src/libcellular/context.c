@@ -1,6 +1,8 @@
 #include <context.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h> // random, srand
+#include <time.h> // time
 
 void load_context(struct Context *ctx) {
     struct Settings *set = &ctx->settings;
@@ -26,6 +28,7 @@ void load_context(struct Context *ctx) {
     ctx->models = NULL;
     ctx->last_model = NULL;
     ctx->models_n = 0;
+    srand(time(NULL));
 }
 
 void upd_projection_mat(struct Context *ctx) {
@@ -142,4 +145,8 @@ void window_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
     ctx->window_size = vector2_new(width, height);
     upd_projection_mat(ctx);
+}
+
+int randint(int a, int b) {
+    return rand() % (b - a + 1) - a;
 }

@@ -54,11 +54,11 @@ GLFWwindow *glfw_glew_init(struct Context *ctx) {
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
     ctx->window_size = vector2_new(width, height);
-    
+
     glPointSize(5);
     glLineWidth(3);
     glEnable(GL_DEPTH_TEST);
-    
+
     return window;
 }
 
@@ -68,9 +68,9 @@ int main(int argc, char *argv[]) {
     GLFWwindow *window = glfw_glew_init(&ctx);
 
     init_models(&ctx);
-    
-    struct Model *model = get_model_by_id(&ctx, 0);
-    GLuint VAO = model->VAO;
+
+    struct Model *modell = get_model_by_id(&ctx, 1);
+    GLuint VAO = modell->VAO;
 
     GLuint shader_program = build_main_program();
     ctx.projection_loc = glGetUniformLocation(shader_program, "projection");
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
         matrix4_push(model, ctx.model_loc);
 
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, modell->indices, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);

@@ -30,6 +30,7 @@ struct Model {
     GLuint VAO; //Vertex Array Object
     GLuint EBO; //Elements Buffer Object
     text name;
+    GLuint indices;
 };
 
 struct Part {
@@ -77,3 +78,5 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
 void window_size_callback(GLFWwindow* window, int width, int height);
+
+int randint(int a, int b);
