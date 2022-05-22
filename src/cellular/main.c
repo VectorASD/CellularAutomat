@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
     GLFWwindow *window = glfwCreateWindow(800, 600, "Cellular Automat by VectorASD & Mapyax", NULL, NULL);
     if (window == NULL) {
@@ -109,11 +109,13 @@ int main(int argc, char *argv[]) {
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetWindowSizeCallback(window, window_size_callback);
 
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
         printf("Инициализация GLEW провалена\n");
         getchar();
+        glfwDestroyWindow(window);
         glfwTerminate();
         return 3;
     }
@@ -214,6 +216,7 @@ int main(int argc, char *argv[]) {
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &EBO);
 
+    glfwDestroyWindow(window);
     glfwTerminate();
 
     return 0;

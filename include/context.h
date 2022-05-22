@@ -44,3 +44,4 @@ void do_movement(struct Context *ctx);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
+void window_size_callback(GLFWwindow* window, int width, int height);

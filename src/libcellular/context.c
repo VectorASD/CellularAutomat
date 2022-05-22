@@ -127,3 +127,10 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
         }
     }
 }
+
+void window_size_callback(GLFWwindow *window, int width, int height) {
+    struct Context *ctx = glfwGetWindowUserPointer(window);
+    glViewport(0, 0, width, height);
+    ctx->window_size = vector2_new(width, height);
+    upd_projection_mat(ctx);
+}
