@@ -58,6 +58,8 @@ GLFWwindow *glfw_glew_init(struct Context *ctx) {
     glPointSize(5);
     glLineWidth(3);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
 
     return window;
 }
@@ -88,23 +90,14 @@ int main(int argc, char *argv[]) {
     part->size = vector3_new(2, 1, 4);
     part2->size = vector3_new(1, 5, 1);
     part2->pos = vector3_new(0, 3, 0);
-    
-    struct Part *del_part, *del_part2, *del_part3;
-    for (int i = 0; i < 16; i++) {
-        struct Part *part = create_part(&ctx, cube);
-        part->pos = vector3_new(i % 4 * 2, 0, -3 - i / 4 * 2);
-        update_part(part);
-        if (i == 0) del_part = part;
-        if (i == 2) del_part2 = part;
-        if (i == 15) del_part3 = part;
-    }
-    delete_part(del_part);
-    delete_part(del_part2);
-    delete_part(del_part3);
-    
-    struct Part *parttt = create_part(&ctx, cube);
-    parttt->pos = vector3_new(0, 0, -11);
-    update_part(parttt);
+
+    for (int y = 0; y < 16; y++)
+        for (int z = -1; z >= -16; z--)
+            for (int x = 0; x < 16; x++) {
+                struct Part *part = create_part(&ctx, cube);
+                part->pos = vector3_new(x * 2, y * 2, z * 2);
+                update_part(part);
+            }
 
     int pred_sec;
     int frames = 0;

@@ -119,12 +119,12 @@ void init_models(struct Context *ctx) {
         -1, 1, 1, 0, 1, 0.5,
         1, 1, 1, 1, 0.5, 0};
     GLuint cube_indices[] = {
-        0, 1, 2, 1, 2, 3,
-        0, 1, 4, 1, 4, 5,
-        0, 2, 4, 2, 4, 6,
-        1, 3, 5, 3, 5, 7,
-        2, 3, 6, 3, 6, 7,
-        4, 5, 6, 5, 6, 7};
+        0, 2, 1, 1, 2, 3,
+        0, 1, 4, 1, 5, 4,
+        0, 4, 2, 2, 4, 6,
+        1, 3, 5, 3, 7, 5,
+        2, 6, 3, 3, 6, 7,
+        4, 5, 6, 5, 7, 6};
     add_model(ctx, create_model("куб", 6 * 8, 3 * 12, cube_vertexes, cube_indices));
 
     int quality = 20;
@@ -153,8 +153,8 @@ void init_models(struct Context *ctx) {
                 indices[i_pos++] = ver_b;
             } else {
                 indices[i_pos++] = ver_c + ver_a;
-                indices[i_pos++] = ver_c + ver_b;
                 indices[i_pos++] = ver_d + ver_a;
+                indices[i_pos++] = ver_c + ver_b;
                 indices[i_pos++] = ver_c + ver_b;
                 indices[i_pos++] = ver_d + ver_a;
                 indices[i_pos++] = ver_d + ver_b;
@@ -165,8 +165,8 @@ void init_models(struct Context *ctx) {
     for (int yaw_deg = 1; yaw_deg <= quality2; yaw_deg++) {
         int ver_c = (quality - 2) * quality2;
         indices[i_pos++] = ver_c + yaw_deg;
-        indices[i_pos++] = ver_c + yaw_deg % quality2 + 1;
         indices[i_pos++] = vertexes_n - 1;
+        indices[i_pos++] = ver_c + yaw_deg % quality2 + 1;
     }
     add_model(ctx, create_model("сфера", 6 * vertexes_n, 3 * indices_n, vertexes, indices));
 }
