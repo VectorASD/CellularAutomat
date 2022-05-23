@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
     GLFWwindow *window = glfw_glew_init(&ctx);
 
     init_models(&ctx);
-    
+
     uint scene = create_scene(&ctx);
     select_scene(&ctx, scene);
 
@@ -82,16 +82,34 @@ int main(int argc, char *argv[]) {
 
     struct Model *cube = get_model_by_id(&ctx, 0);
     struct Model *sphere = get_model_by_id(&ctx, 1);
-    
+
     struct Part *part = create_part(&ctx, cube);
     struct Part *part2 = create_part(&ctx, sphere);
     part->size = vector3_new(2, 1, 4);
-    part2->pos = vector3_new(0, 1, 0);
+    part2->size = vector3_new(1, 5, 1);
+    part2->pos = vector3_new(0, 3, 0);
+    
+    struct Part *del_part, *del_part2, *del_part3;
+    for (int i = 0; i < 16; i++) {
+        struct Part *part = create_part(&ctx, cube);
+        part->pos = vector3_new(i % 4 * 2, 0, -3 - i / 4 * 2);
+        update_part(part);
+        if (i == 0) del_part = part;
+        if (i == 2) del_part2 = part;
+        if (i == 15) del_part3 = part;
+    }
+    delete_part(del_part);
+    delete_part(del_part2);
+    delete_part(del_part3);
+    
+    struct Part *parttt = create_part(&ctx, cube);
+    parttt->pos = vector3_new(0, 0, -11);
+    update_part(parttt);
 
     int pred_sec;
     int frames = 0;
 
-    glClearColor(0, 0.5, 1, 0);
+    glClearColor(0.4, 0.8, 1, 0);
     do {
         glfwPollEvents();
         do_movement(&ctx);
@@ -105,7 +123,7 @@ int main(int argc, char *argv[]) {
             printf("time: %2u   fps: %u\n", pred_sec, frames);
             frames = 0;
         }
-        
+
         glUseProgram(shader_program);
 
         float angle = radians(time * 50);
@@ -114,7 +132,7 @@ int main(int argc, char *argv[]) {
         part2->orientation.x = angle;
         part2->orientation.y = angle / 5;
         update_part(part2);
-        
+
         render_scene(&ctx);
 
         glfwSwapBuffers(window);

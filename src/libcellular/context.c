@@ -2,7 +2,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h> // random, srand
-#include <time.h> // time
+#include <time.h>   // time
 
 void load_context(struct Context *ctx) {
     struct Settings *set = &ctx->settings;
@@ -117,7 +117,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
 
     if (camera->pitch > 89) camera->pitch = 89;
     if (camera->pitch < -89) camera->pitch = -89;
-    
+
     float yaw = radians(camera->yaw);
     float pitch = radians(camera->pitch);
 

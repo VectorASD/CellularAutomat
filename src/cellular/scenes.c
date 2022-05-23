@@ -181,7 +181,8 @@ struct Part *create_part(struct Context *ctx, struct Model *model) {
     part->used_model = model;
     part->pos = part->orientation = vector3_new(0, 0, 0);
     part->size = vector3_new(1, 1, 1);
-    struct Scene *scene = ctx->current_scene;
+    struct Scene *scene = part->scene = ctx->current_scene;
+    part->pred = scene->last_part;
     if (scene->last_part == NULL)
         scene->parts = scene->last_part = part;
     else
@@ -213,6 +214,19 @@ void free_parts(struct Scene *scene) {
         free(p);
         p = next;
     }
+}
+
+void delete_part(struct Part *part) {
+    struct Scene *scene = part->scene;
+    struct Part *pred_part = part->pred, *next = part->next;
+    if (pred_part == NULL) {
+        scene->parts = next;
+        if (next == NULL) scene->last_part = NULL;
+    } else {
+        pred_part->next = next;
+        if (next == NULL) scene->last_part = pred_part;
+    }
+    free(part);
 }
 
 //

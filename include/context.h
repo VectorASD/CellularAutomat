@@ -34,7 +34,8 @@ struct Model {
 };
 
 struct Part {
-    struct Part *next;
+    struct Part *next, *pred;
+    struct Scene *scene;
     struct Model *used_model;
     mat4 model_mat;
     vec3 pos;
