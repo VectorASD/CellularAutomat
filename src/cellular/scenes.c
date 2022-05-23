@@ -181,6 +181,10 @@ struct Part *create_part(struct Context *ctx, struct Model *model) {
     part->used_model = model;
     part->pos = part->orientation = vector3_new(0, 0, 0);
     part->size = vector3_new(1, 1, 1);
+    part->color = vector4_new(1, 1, 0.5, 1);
+    part->edge_color = vector4_new(0.5, 0.5, 1, 1);
+    part->color_mode = 3;
+    part->visible = 1;
     struct Scene *scene = part->scene = ctx->current_scene;
     part->pred = scene->last_part;
     if (scene->last_part == NULL)
@@ -200,8 +204,12 @@ void update_part(struct Part *part) {
 }
 
 void render_part(struct Context *ctx, struct Part *part) {
+    if (!part->visible) return;
     struct Model *model = part->used_model;
     matrix4_push(part->model_mat, ctx->model_loc);
+    glUniform4fv(ctx->main_color_loc, 1, (GLfloat*) &part->color);
+    glUniform4fv(ctx->edge_color_loc, 1, (GLfloat*) &part->edge_color);
+    glUniform1i(ctx->color_mode_loc, part->color_mode);
     glBindVertexArray(model->VAO);
     glDrawElements(GL_TRIANGLES, model->indices, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);

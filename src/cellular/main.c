@@ -78,6 +78,9 @@ int main(int argc, char *argv[]) {
     ctx.projection_loc = glGetUniformLocation(shader_program, "projection");
     ctx.view_loc = glGetUniformLocation(shader_program, "view");
     ctx.model_loc = glGetUniformLocation(shader_program, "model");
+    ctx.main_color_loc = glGetUniformLocation(shader_program, "main_color");
+    ctx.edge_color_loc = glGetUniformLocation(shader_program, "edge_color");
+    ctx.color_mode_loc = glGetUniformLocation(shader_program, "color_mode");
     glUseProgram(shader_program);
     upd_projection_mat(&ctx);
     upd_view_mat(&ctx);
@@ -92,11 +95,15 @@ int main(int argc, char *argv[]) {
     part2->pos = vector3_new(0, 3, 0);
 
     for (int y = 0; y < 16; y++)
-        for (int z = -1; z >= -16; z--)
+        for (int z = 0; z < 16; z++)
             for (int x = 0; x < 16; x++) {
                 struct Part *part = create_part(&ctx, cube);
-                part->pos = vector3_new(x * 2, y * 2, z * 2);
+                part->pos = vector3_new(x * 2, y * 2, -z * 2 - 2);
                 update_part(part);
+                part->color_mode = (x + y + z) % 4;
+                part->color = vector4_new(x / 16., y / 16., z / 16., 1);
+                part->edge_color = vector4_new(1 - x / 16., 1 - y / 16., 1 - z / 16., 1);
+                part->visible = (x % 5 == 1) + (y % 5 == 2) + (z % 5 == 3) >= 2;
             }
 
     int pred_sec;

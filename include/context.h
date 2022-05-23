@@ -41,6 +41,10 @@ struct Part {
     vec3 pos;
     vec3 orientation;
     vec3 size;
+    vec4 color;
+    vec4 edge_color;
+    byte color_mode;
+    byte visible;
 };
 
 struct Scene {
@@ -68,6 +72,9 @@ struct Context {
     struct Model *models;
     struct Model *last_model;
     int models_n;
+    GLint main_color_loc;
+    GLint edge_color_loc;
+    GLint color_mode_loc;
 };
 
 void load_context(struct Context *ctx);

@@ -64,13 +64,19 @@ GLuint build_main_program() {
         in vec3 our_color;
         in vec3 pos;
         out vec4 color;
+        uniform vec4 main_color;
+        uniform vec4 edge_color;
+        uniform int color_mode;
         void main() {
-            int edge_x = pos.x < -0.98 || pos.x > 0.98 ? 1 : 0;
-            int edge_y = pos.y < -0.98 || pos.y > 0.98 ? 1 : 0;
-            int edge_z = pos.z < -0.98 || pos.z > 0.98 ? 1 : 0;
-            bool edge = edge_x + edge_y + edge_z >= 2;
-            if (edge) color = vec4(0, 0, 0, 1);
-	    else color = vec4(our_color, 1);
+            if (color_mode == 1 || color_mode == 3) color = main_color;
+            else color = vec4(our_color, 1);
+            if (color_mode >= 2) {
+                int edge_x = pos.x < -0.98 || pos.x > 0.98 ? 1 : 0;
+                int edge_y = pos.y < -0.98 || pos.y > 0.98 ? 1 : 0;
+                int edge_z = pos.z < -0.98 || pos.z > 0.98 ? 1 : 0;
+                bool edge = edge_x + edge_y + edge_z >= 2;
+                if (edge) color = edge_color;
+	    }
         }
     )glsl";
     return build_program(vertex_shader_source, fragment_shader_source);
