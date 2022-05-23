@@ -9,10 +9,10 @@ void load_context(struct Context *ctx) {
     struct Camera *camera = &ctx->camera;
     set->polygon_mod = 0;
     set->user_input_dbg = 0;
-    camera->pos = vector3_new(0, 0, 3);
+    camera->pos = vector3_new(0, 2, 3);
     camera->front = vector3_new(0, 0, -1);
     camera->up = vector3_new(0, 1, 0);
-    camera->speed = 5;
+    camera->speed = 10;
     camera->last_cursor_pos = vector2_new(0, 0);
     camera->yaw = -90;
     camera->pitch = 0;
@@ -45,7 +45,7 @@ void upd_view_mat(struct Context *ctx) {
 void do_movement(struct Context *ctx) {
     struct Camera *camera = &ctx->camera;
     float speed = ctx->delta_time * camera->speed;
-    if (ctx->keys[GLFW_KEY_LEFT_SHIFT]) speed *= 3;
+    if (ctx->keys[GLFW_KEY_LEFT_SHIFT]) speed *= 2;
     vec3 move = vector3_new(0, 0, 0);
     if (ctx->keys[GLFW_KEY_W]) move.x++;
     if (ctx->keys[GLFW_KEY_S]) move.x--;

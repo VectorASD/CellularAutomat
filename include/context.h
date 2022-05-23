@@ -35,15 +35,17 @@ struct Model {
 
 struct Part {
     struct Part *next;
-    mat4 model;
+    struct Model *used_model;
+    mat4 model_mat;
     vec3 pos;
     vec3 orientation;
+    vec3 size;
 };
 
 struct Scene {
     struct Scene *next;
-    struct Model *used_model;
     struct Part *parts;
+    struct Part *last_part;
     int parts_n;
 };
 

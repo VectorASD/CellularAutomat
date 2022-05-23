@@ -1,8 +1,12 @@
+#include <math.h> // sin, cos
 #include <scenes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> // strcmp
-#include <math.h> // sin, cos
+
+//
+// Models
+//
 
 struct Model *create_model(text name, GLuint vertexes_n, GLuint indices_n, GLfloat vertexes[], GLuint indices[]) {
     struct Model *model = malloc(sizeof(struct Model));
@@ -72,7 +76,7 @@ struct Model *get_model_by_id(struct Context *ctx, uint id) {
         n++;
         p = p->next;
     }
-    printf("Допустимое значение id модели от 0 до %u. Вы же запросили id: %u\n", n, id);
+    printf("Допустимое id модели от 0 до %u. Вы же запросили id: %u\n", n - 1, id);
     print_model_list(ctx);
     exit(4);
 }
@@ -122,7 +126,7 @@ void init_models(struct Context *ctx) {
         2, 3, 6, 3, 6, 7,
         4, 5, 6, 5, 6, 7};
     add_model(ctx, create_model("куб", 6 * 8, 3 * 12, cube_vertexes, cube_indices));
-    
+
     int quality = 20;
     int quality2 = quality * 2;
     int vertexes_n = quality2 * (quality - 1) + 2;
@@ -163,7 +167,99 @@ void init_models(struct Context *ctx) {
         indices[i_pos++] = ver_c + yaw_deg;
         indices[i_pos++] = ver_c + yaw_deg % quality2 + 1;
         indices[i_pos++] = vertexes_n - 1;
-        printf("LOL: %u %u %u\n", indices[i_pos - 3], indices[i_pos - 2], indices[i_pos - 1]);
     }
     add_model(ctx, create_model("сфера", 6 * vertexes_n, 3 * indices_n, vertexes, indices));
+}
+
+//
+// Parts
+//
+
+struct Part *create_part(struct Context *ctx, struct Model *model) {
+    struct Part *part = malloc(sizeof(struct Part));
+    part->next = NULL;
+    part->used_model = model;
+    part->pos = part->orientation = vector3_new(0, 0, 0);
+    part->size = vector3_new(1, 1, 1);
+    struct Scene *scene = ctx->current_scene;
+    if (scene->last_part == NULL)
+        scene->parts = scene->last_part = part;
+    else
+        scene->last_part = scene->last_part->next = part;
+    update_part(part);
+    return part;
+}
+
+void update_part(struct Part *part) {
+    mat4 model = translate(matrix4_new(1), part->pos);
+    model = rotate(model, part->orientation.y, vector3_new(0, 1, 0));
+    model = rotate(model, part->orientation.x, vector3_new(1, 0, 0));
+    model = scale(model, vector3_div_s(part->size, 2));
+    part->model_mat = rotate(model, part->orientation.z, vector3_new(0, 0, 1));
+}
+
+void render_part(struct Context *ctx, struct Part *part) {
+    struct Model *model = part->used_model;
+    matrix4_push(part->model_mat, ctx->model_loc);
+    glBindVertexArray(model->VAO);
+    glDrawElements(GL_TRIANGLES, model->indices, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
+
+void free_parts(struct Scene *scene) {
+    struct Part *p = scene->parts, *next;
+    while (p) {
+        next = p->next;
+        free(p);
+        p = next;
+    }
+}
+
+//
+// Scenes
+//
+
+uint create_scene(struct Context *ctx) {
+    struct Scene *scene = malloc(sizeof(struct Scene));
+    scene->next = NULL;
+    if (ctx->last_scene == NULL)
+        ctx->scenes = ctx->last_scene = scene;
+    else
+        ctx->last_scene = ctx->last_scene->next = scene;
+    return ctx->scenes_n++;
+}
+
+void select_scene(struct Context *ctx, uint id) {
+    struct Scene *p = ctx->scenes;
+    uint n = 0;
+    while (p) {
+        if (id == n) {
+            ctx->current_scene = p;
+            return;
+        }
+        n++;
+        p = p->next;
+    }
+    printf("Допустимое id сцены от 0 до %u. Вы же выбрал сцену под id: %u\n", n - 1, id);
+    exit(5);
+}
+
+void render_scene(struct Context *ctx) {
+    struct Scene *scene = ctx->current_scene;
+    struct Part *p = scene->parts;
+    while (p) {
+        render_part(ctx, p);
+        p = p->next;
+    }
+}
+
+void free_scenes(struct Context *ctx) {
+    free_models(ctx);
+    struct Scene *p = ctx->scenes, *next;
+    while (p) {
+        next = p->next;
+        free_parts(p);
+        free(p);
+        p = next;
+    }
 }

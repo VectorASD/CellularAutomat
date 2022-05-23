@@ -68,9 +68,9 @@ int main(int argc, char *argv[]) {
     GLFWwindow *window = glfw_glew_init(&ctx);
 
     init_models(&ctx);
-
-    struct Model *modell = get_model_by_id(&ctx, 1);
-    GLuint VAO = modell->VAO;
+    
+    uint scene = create_scene(&ctx);
+    select_scene(&ctx, scene);
 
     GLuint shader_program = build_main_program();
     ctx.projection_loc = glGetUniformLocation(shader_program, "projection");
@@ -80,7 +80,14 @@ int main(int argc, char *argv[]) {
     upd_projection_mat(&ctx);
     upd_view_mat(&ctx);
 
-    vec3 angles = vector3_norm(vector3_new(1, 0.2, 0));
+    struct Model *cube = get_model_by_id(&ctx, 0);
+    struct Model *sphere = get_model_by_id(&ctx, 1);
+    
+    struct Part *part = create_part(&ctx, cube);
+    struct Part *part2 = create_part(&ctx, sphere);
+    part->size = vector3_new(2, 1, 4);
+    part2->pos = vector3_new(0, 1, 0);
+
     int pred_sec;
     int frames = 0;
 
@@ -98,22 +105,24 @@ int main(int argc, char *argv[]) {
             printf("time: %2u   fps: %u\n", pred_sec, frames);
             frames = 0;
         }
+        
         glUseProgram(shader_program);
 
         float angle = radians(time * 50);
-        mat4 model = rotate(matrix4_new(0.5), angle, angles);
-        matrix4_push(model, ctx.model_loc);
-
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, modell->indices, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
+        part->orientation.y = angle;
+        update_part(part);
+        part2->orientation.x = angle;
+        part2->orientation.y = angle / 5;
+        update_part(part2);
+        
+        render_scene(&ctx);
 
         glfwSwapBuffers(window);
         frames++;
     } while (glfwWindowShouldClose(window) == 0);
 
     glDeleteProgram(shader_program);
-    free_models(&ctx);
+    free_scenes(&ctx);
 
     glfwDestroyWindow(window);
     glfwTerminate();
