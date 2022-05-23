@@ -1,6 +1,7 @@
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <context.h>
+#include <scene_0.h>
 #include <scenes.h>
 #include <shaders.h>
 #include <stdio.h>
@@ -71,8 +72,9 @@ int main(int argc, char *argv[]) {
 
     init_models(&ctx);
 
-    uint scene = create_scene(&ctx);
-    select_scene(&ctx, scene);
+    uint scene_0 = bind_scene(&ctx, init_scene_0, render_scene_0);
+
+    select_scene(&ctx, scene_0);
 
     GLuint shader_program = build_main_program();
     ctx.projection_loc = glGetUniformLocation(shader_program, "projection");
@@ -85,27 +87,6 @@ int main(int argc, char *argv[]) {
     upd_projection_mat(&ctx);
     upd_view_mat(&ctx);
 
-    struct Model *cube = get_model_by_id(&ctx, 0);
-    struct Model *sphere = get_model_by_id(&ctx, 1);
-
-    struct Part *part = create_part(&ctx, cube);
-    struct Part *part2 = create_part(&ctx, sphere);
-    part->size = vector3_new(2, 1, 4);
-    part2->size = vector3_new(1, 5, 1);
-    part2->pos = vector3_new(0, 3, 0);
-
-    for (int y = 0; y < 16; y++)
-        for (int z = 0; z < 16; z++)
-            for (int x = 0; x < 16; x++) {
-                struct Part *part = create_part(&ctx, cube);
-                part->pos = vector3_new(x * 2, y * 2, -z * 2 - 2);
-                update_part(part);
-                part->color_mode = (x + y + z) % 4;
-                part->color = vector4_new(x / 16., y / 16., z / 16., 1);
-                part->edge_color = vector4_new(1 - x / 16., 1 - y / 16., 1 - z / 16., 1);
-                part->visible = (x % 5 == 1) + (y % 5 == 2) + (z % 5 == 3) >= 2;
-            }
-
     int pred_sec;
     int frames = 0;
 
@@ -115,7 +96,7 @@ int main(int argc, char *argv[]) {
         do_movement(&ctx);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        float time = glfwGetTime();
+        float time = ctx.time = glfwGetTime();
         ctx.delta_time = time - ctx.last_frame_time;
         ctx.last_frame_time = time;
         if ((int) time != pred_sec) {
@@ -125,14 +106,6 @@ int main(int argc, char *argv[]) {
         }
 
         glUseProgram(shader_program);
-
-        float angle = radians(time * 50);
-        part->orientation.y = angle;
-        update_part(part);
-        part2->orientation.x = angle;
-        part2->orientation.y = angle / 5;
-        update_part(part2);
-
         render_scene(&ctx);
 
         glfwSwapBuffers(window);

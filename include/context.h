@@ -52,12 +52,18 @@ struct Scene {
     struct Part *parts;
     struct Part *last_part;
     int parts_n;
+    void *user_pointer;
+    struct Context *ctx;
+    void (*init)(struct Scene *scene);
+    void (*render)(struct Scene *scene);
+    byte first_tick;
 };
 
 struct Context {
     struct Settings settings;
     struct Camera camera;
     byte keys[1024];
+    float time;
     float delta_time;
     float last_frame_time;
     GLint projection_loc;

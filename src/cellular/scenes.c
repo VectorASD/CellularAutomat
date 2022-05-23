@@ -181,8 +181,8 @@ struct Part *create_part(struct Context *ctx, struct Model *model) {
     part->used_model = model;
     part->pos = part->orientation = vector3_new(0, 0, 0);
     part->size = vector3_new(1, 1, 1);
-    part->color = vector4_new(1, 1, 0.5, 1);
-    part->edge_color = vector4_new(0.5, 0.5, 1, 1);
+    part->color = vector4_new(0.8, 0.8, 0.8, 1);
+    part->edge_color = vector4_new(0, 0, 0, 1);
     part->color_mode = 3;
     part->visible = 1;
     struct Scene *scene = part->scene = ctx->current_scene;
@@ -191,6 +191,7 @@ struct Part *create_part(struct Context *ctx, struct Model *model) {
         scene->parts = scene->last_part = part;
     else
         scene->last_part = scene->last_part->next = part;
+    scene->parts_n++;
     update_part(part);
     return part;
 }
@@ -207,8 +208,8 @@ void render_part(struct Context *ctx, struct Part *part) {
     if (!part->visible) return;
     struct Model *model = part->used_model;
     matrix4_push(part->model_mat, ctx->model_loc);
-    glUniform4fv(ctx->main_color_loc, 1, (GLfloat*) &part->color);
-    glUniform4fv(ctx->edge_color_loc, 1, (GLfloat*) &part->edge_color);
+    glUniform4fv(ctx->main_color_loc, 1, (GLfloat *) &part->color);
+    glUniform4fv(ctx->edge_color_loc, 1, (GLfloat *) &part->edge_color);
     glUniform1i(ctx->color_mode_loc, part->color_mode);
     glBindVertexArray(model->VAO);
     glDrawElements(GL_TRIANGLES, model->indices, GL_UNSIGNED_INT, 0);
@@ -235,6 +236,7 @@ void delete_part(struct Part *part) {
         if (next == NULL) scene->last_part = pred_part;
     }
     free(part);
+    scene->parts_n--;
 }
 
 //
@@ -244,6 +246,11 @@ void delete_part(struct Part *part) {
 uint create_scene(struct Context *ctx) {
     struct Scene *scene = malloc(sizeof(struct Scene));
     scene->next = NULL;
+    scene->parts = NULL;
+    scene->last_part = NULL;
+    scene->parts_n = 0;
+    scene->user_pointer = NULL;
+    scene->ctx = ctx;
     if (ctx->last_scene == NULL)
         ctx->scenes = ctx->last_scene = scene;
     else
@@ -262,12 +269,17 @@ void select_scene(struct Context *ctx, uint id) {
         n++;
         p = p->next;
     }
-    printf("Допустимое id сцены от 0 до %u. Вы же выбрал сцену под id: %u\n", n - 1, id);
+    printf("Допустимое id сцены от 0 до %u. Вы же выбрали сцену под id: %u\n", n - 1, id);
     exit(5);
 }
 
 void render_scene(struct Context *ctx) {
     struct Scene *scene = ctx->current_scene;
+    if (scene->first_tick) {
+        scene->first_tick = 0;
+        scene->init(scene);
+    }
+    scene->render(scene);
     struct Part *p = scene->parts;
     while (p) {
         render_part(ctx, p);
@@ -281,7 +293,18 @@ void free_scenes(struct Context *ctx) {
     while (p) {
         next = p->next;
         free_parts(p);
+        if (p->user_pointer != NULL) free(p->user_pointer);
         free(p);
         p = next;
     }
+}
+
+uint bind_scene(struct Context *ctx, void (*init)(struct Scene *scene), void (*render)(struct Scene *scene)) {
+    uint id = create_scene(ctx);
+    select_scene(ctx, id);
+    struct Scene *scene = ctx->current_scene;
+    scene->init = init;
+    scene->render = render;
+    scene->first_tick = 1;
+    return id;
 }

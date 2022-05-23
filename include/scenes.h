@@ -16,7 +16,7 @@ struct Part *create_part(struct Context *ctx, struct Model *model);
 void update_part(struct Part *part);
 void delete_part(struct Part *part);
 
-uint create_scene(struct Context *ctx);
 void select_scene(struct Context *ctx, uint id);
 void render_scene(struct Context *ctx);
 void free_scenes(struct Context *ctx);
+uint bind_scene(struct Context *ctx, void (*init)(struct Scene *scene), void (*render)(struct Scene *scene));
