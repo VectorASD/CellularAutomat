@@ -273,8 +273,19 @@ void select_scene(struct Context *ctx, uint id) {
     exit(5);
 }
 
+void global_gui(struct Context *ctx) {
+    glUseProgram(ctx->gui_program);
+    glDisable(GL_CULL_FACE);
+    for (int i = 0; i < 10; i++)
+        draw_line(ctx, 100 + i * 15, 100, 500 + i * 15, 500);
+    draw_triangle(ctx, 100, 400, 100, 500, 200, 500);
+    draw_box(ctx, 500, 100, 100, 100);
+    render_primitives(ctx);
+}
+
 void render_scene(struct Context *ctx) {
     glUseProgram(ctx->shader_program);
+    glEnable(GL_CULL_FACE);
     struct Scene *scene = ctx->current_scene;
     if (scene->first_tick) {
         scene->first_tick = 0;
@@ -286,8 +297,7 @@ void render_scene(struct Context *ctx) {
         render_part(ctx, p);
         p = p->next;
     }
-    glUseProgram(ctx->gui_program);
-    draw_line(ctx, 0, 0, 0.5, 0.5);
+    global_gui(ctx);
     glUseProgram(ctx->shader_program);
 }
 

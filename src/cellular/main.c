@@ -59,8 +59,9 @@ GLFWwindow *glfw_glew_init(struct Context *ctx) {
     glPointSize(5);
     glLineWidth(3);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     return window;
 }
@@ -89,7 +90,6 @@ int main(int argc, char *argv[]) {
     upd_projection_mat(&ctx);
     upd_view_mat(&ctx);
     ctx.gui_program = build_gui_program();
-    ctx.gui_color_loc = glGetUniformLocation(ctx.gui_program, "our_color");
 
     int pred_sec;
     int frames = 0;

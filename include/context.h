@@ -59,9 +59,28 @@ struct Scene {
     byte first_tick;
 };
 
+struct VertexNode {
+    struct VertexNode *next;
+    GLfloat x, y, z, r, g, b, a;
+};
+
+struct VertexList {
+    struct VertexNode *first;
+    struct VertexNode *last;
+    int n;
+};
+
 struct Primitives {
     GLuint VBO;
     GLuint VAO;
+    struct VertexList lines;
+    struct VertexList triangles;
+    vec4 line_color;
+    vec4 line_color2;
+    vec4 tri_color;
+    vec4 tri_color2;
+    vec4 tri_color3;
+    vec4 tri_color4;
 };
 
 struct Context {
@@ -88,7 +107,6 @@ struct Context {
     GLint color_mode_loc;
     GLint gui_program;
     GLuint shader_program;
-    GLint gui_color_loc;
     struct Primitives prim;
 };
 

@@ -86,14 +86,17 @@ GLuint build_gui_program() {
     text vertex_shader_source = R"glsl(
         #version 330 core
         layout (location = 0) in vec3 position;
+        layout (location = 1) in vec4 color;
+        out vec4 our_color;
         void main() {
             gl_Position = vec4(position, 1);
+            our_color = color;
         }
     )glsl";
     text fragment_shader_source = R"glsl(
         #version 330 core
+        in vec4 our_color;
         out vec4 color;
-        uniform vec4 our_color;
         void main() {
             color = our_color;
         }
