@@ -81,3 +81,22 @@ GLuint build_main_program() {
     )glsl";
     return build_program(vertex_shader_source, fragment_shader_source);
 }
+
+GLuint build_gui_program() {
+    text vertex_shader_source = R"glsl(
+        #version 330 core
+        layout (location = 0) in vec3 position;
+        void main() {
+            gl_Position = vec4(position, 1);
+        }
+    )glsl";
+    text fragment_shader_source = R"glsl(
+        #version 330 core
+        out vec4 color;
+        uniform vec4 our_color;
+        void main() {
+            color = our_color;
+        }
+    )glsl";
+    return build_program(vertex_shader_source, fragment_shader_source);
+}

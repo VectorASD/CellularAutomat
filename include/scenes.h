@@ -2,6 +2,7 @@
 
 #include <GL/glew.h>
 #include <context.h>
+#include <primitives.h>
 
 struct Model *create_model(text name, GLuint vertices_n, GLuint indices_n, GLfloat vertices[], GLuint indices[]);
 void free_model(struct Model *model);

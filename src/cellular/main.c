@@ -71,6 +71,7 @@ int main(int argc, char *argv[]) {
     GLFWwindow *window = glfw_glew_init(&ctx);
 
     init_models(&ctx);
+    build_primitives_buffer(&ctx);
 
     uint scene_0 = bind_scene(&ctx, init_scene_0, render_scene_0);
 
@@ -83,9 +84,12 @@ int main(int argc, char *argv[]) {
     ctx.main_color_loc = glGetUniformLocation(shader_program, "main_color");
     ctx.edge_color_loc = glGetUniformLocation(shader_program, "edge_color");
     ctx.color_mode_loc = glGetUniformLocation(shader_program, "color_mode");
+    ctx.shader_program = shader_program;
     glUseProgram(shader_program);
     upd_projection_mat(&ctx);
     upd_view_mat(&ctx);
+    ctx.gui_program = build_gui_program();
+    ctx.gui_color_loc = glGetUniformLocation(ctx.gui_program, "our_color");
 
     int pred_sec;
     int frames = 0;
@@ -105,7 +109,6 @@ int main(int argc, char *argv[]) {
             frames = 0;
         }
 
-        glUseProgram(shader_program);
         render_scene(&ctx);
 
         glfwSwapBuffers(window);

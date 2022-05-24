@@ -274,6 +274,7 @@ void select_scene(struct Context *ctx, uint id) {
 }
 
 void render_scene(struct Context *ctx) {
+    glUseProgram(ctx->shader_program);
     struct Scene *scene = ctx->current_scene;
     if (scene->first_tick) {
         scene->first_tick = 0;
@@ -285,6 +286,9 @@ void render_scene(struct Context *ctx) {
         render_part(ctx, p);
         p = p->next;
     }
+    glUseProgram(ctx->gui_program);
+    draw_line(ctx, 0, 0, 0.5, 0.5);
+    glUseProgram(ctx->shader_program);
 }
 
 void free_scenes(struct Context *ctx) {

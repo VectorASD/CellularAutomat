@@ -59,6 +59,11 @@ struct Scene {
     byte first_tick;
 };
 
+struct Primitives {
+    GLuint VBO;
+    GLuint VAO;
+};
+
 struct Context {
     struct Settings settings;
     struct Camera camera;
@@ -81,6 +86,10 @@ struct Context {
     GLint main_color_loc;
     GLint edge_color_loc;
     GLint color_mode_loc;
+    GLint gui_program;
+    GLuint shader_program;
+    GLint gui_color_loc;
+    struct Primitives prim;
 };
 
 void load_context(struct Context *ctx);
