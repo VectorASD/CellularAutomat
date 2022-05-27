@@ -2,7 +2,10 @@ APP_NAME = main
 LIB_NAME = libyeah
 PROJECT = cellular
 
-CFLAGS = -Wall -Werror -I include -MMD
+FreeTypeARCHIVE = freetype-2.12.1
+FreeTypeLIB_PATH = $(FreeTypeARCHIVE)/objs/libfreetype.a
+
+CFLAGS = -Wall -Werror -I include -MMD -I $(FreeTypeARCHIVE)/include
 LFLAGS = -lglfw -lGL -lGLEW -lm
 TEST_CFLAGS = $(CFLAGS) -I thirdparty
 
@@ -24,7 +27,7 @@ all: $(OBJ) $(APP_PATH)
 
 -include $(DEPS)
 
-$(APP_PATH): $(APP_OBJ) $(LIB_PATH)
+$(APP_PATH): $(APP_OBJ) $(LIB_PATH) $(FreeTypeLIB_PATH)
 	gcc $^ -o $@ $(LFLAGS)
 
 $(LIB_PATH): $(LIB_OBJ)
@@ -33,9 +36,12 @@ $(LIB_PATH): $(LIB_OBJ)
 $(OBJ):
 	gcc $(CFLAGS) -o $@ -c $(@:obj/src/%.o=src/%.c)
 
+ifneq ($(wildcard $(FreeTypeARCHIVE)),)
 .PHONY: clean
 clean:
 	rm -f $(APP_PATH) $(LIB_PATH) $(OBJ) $(DEPS) $(TEST_OBJ) $(TEST_PATH)
+	cd $(FreeTypeARCHIVE) && make clean
+endif
 
 run: all
 	./$(APP_PATH)
@@ -50,3 +56,12 @@ $(TEST_PATH): $(TEST_OBJ) $(LIB_PATH)
 $(TEST_OBJ):
 	gcc $(TEST_CFLAGS) -o $@ -c $(@:obj/test/%.o=test/%.c)
 
+$(FreeTypeLIB_PATH):
+ifeq ($(wildcard $(FreeTypeARCHIVE)),)
+	tar -jxf $(FreeTypeARCHIVE).tar.bz
+endif
+	cd $(FreeTypeARCHIVE) && make
+
+.PHONY: archivate
+archivate:
+	tar -jcf $(FreeTypeARCHIVE).tar.bz $(FreeTypeARCHIVE)

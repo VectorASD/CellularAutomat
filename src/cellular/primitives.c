@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h> // memcpy
 
-void build_primitives_buffer(struct Context *ctx) {
+void init_primitives(struct Context *ctx) {
     struct Primitives *prim = &ctx->prim;
 
     glGenBuffers(1, &prim->VBO);
@@ -24,11 +24,31 @@ void build_primitives_buffer(struct Context *ctx) {
     prim->triangles.last = NULL;
     prim->triangles.n = 0;
     prim->line_color = vector4_new(1, 1, 0, 1);
-    prim->line_color2 = vector4_new(0, 0, 1, 1);
+    prim->line_color2 = vector4_new(0, 0, 1, 0.5);
     prim->tri_color = vector4_new(0, 1, 0, 1);
-    prim->tri_color2 = vector4_new(0, 0, 1, 1);
+    prim->tri_color2 = vector4_new(0, 0, 1, 0.5);
     prim->tri_color3 = vector4_new(1, 1, 0, 1);
     prim->tri_color4 = vector4_new(1, 0.5, 0, 1);
+
+    struct Font *font = &ctx->font;
+
+    if (FT_Init_FreeType(&font->ft)) {
+        printf("Не удаётся инициализировать FreeType библиотеку\n");
+        exit(7);
+    }
+    if (FT_New_Face(font->ft, "fonts/Airfool.ttf", 0, &font->face)) {
+        printf("Не удаётся загрузить шрифт\n");
+        exit(8);
+    }
+    FT_Face face = font->face;
+    FT_Set_Pixel_Sizes(face, 0, 48);
+    if (FT_Load_Char(face, 'X', FT_LOAD_RENDER)) {
+        printf("Не удаётся загрузить глиф 'X'\n");
+    }
+    printf("Информацию о шрифте:\n");
+    printf("  Число глифов: %lu\n", face->num_glyphs);
+    printf("  Название: %s\n", face->family_name);
+    printf("  Стиль: %s\n", face->style_name);
 }
 
 void add_vertex_node(GLfloat aspect, struct VertexList *list, GLfloat x, GLfloat y, GLfloat z, vec4 *color) {
@@ -92,6 +112,16 @@ void draw_box(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat 
     add_vertex_node(aspect, triangles, x2, y2, -1, &prim->tri_color4);
 }
 
+void set_line_color(struct Context *ctx, float R, float G, float B, float A) {
+    struct Primitives *prim = &ctx->prim;
+    prim->line_color = prim->line_color2 = vector4_new(R / 255, G / 255, B / 255, A / 255);
+}
+
+void set_box_color(struct Context *ctx, float R, float G, float B, float A) {
+    struct Primitives *prim = &ctx->prim;
+    prim->tri_color = prim->tri_color2 = prim->tri_color3 = prim->tri_color4 = vector4_new(R / 255, G / 255, B / 255, A / 255);
+}
+
 void render_primitives(struct Context *ctx) {
     struct Primitives *prim = &ctx->prim;
     int lines_n = prim->lines.n;
@@ -128,4 +158,8 @@ void free_primitives(struct Context *ctx) {
         free(p);
         p = next;
     }
+    
+    struct Font *font = &ctx->font;
+    FT_Done_Face(font->face);
+    FT_Done_FreeType(font->ft);
 }

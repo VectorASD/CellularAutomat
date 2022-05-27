@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
     GLFWwindow *window = glfw_glew_init(&ctx);
 
     init_models(&ctx);
-    build_primitives_buffer(&ctx);
+    init_primitives(&ctx);
 
     uint scene_0 = bind_scene(&ctx, init_scene_0, render_scene_0);
 

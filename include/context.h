@@ -1,6 +1,8 @@
 #pragma once
 
 #include <matrix.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 typedef unsigned char byte;
 typedef unsigned short ushort;
@@ -83,6 +85,11 @@ struct Primitives {
     vec4 tri_color4;
 };
 
+struct Font {
+    FT_Library ft; // в freetype/freetype.h на 1072 строчке описана эта структура
+    FT_Face face;
+};
+
 struct Context {
     struct Settings settings;
     struct Camera camera;
@@ -108,6 +115,7 @@ struct Context {
     GLint gui_program;
     GLuint shader_program;
     struct Primitives prim;
+    struct Font font;
 };
 
 void load_context(struct Context *ctx);
