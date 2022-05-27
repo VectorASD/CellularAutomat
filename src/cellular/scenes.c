@@ -311,6 +311,7 @@ void free_scenes(struct Context *ctx) {
         free(p);
         p = next;
     }
+    free_primitives(ctx);
 }
 
 uint bind_scene(struct Context *ctx, void (*init)(struct Scene *scene), void (*render)(struct Scene *scene)) {

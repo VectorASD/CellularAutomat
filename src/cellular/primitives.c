@@ -111,3 +111,21 @@ void render_primitives(struct Context *ctx) {
 
     glBindVertexArray(0);
 }
+
+void free_primitives(struct Context *ctx) {
+    struct Primitives *prim = &ctx->prim;
+    glDeleteBuffers(1, &prim->VBO);
+    glDeleteVertexArrays(1, &prim->VAO);
+    struct VertexNode *p = prim->lines.first, *next;
+    while (p) {
+        next = p->next;
+        free(p);
+        p = next;
+    }
+    p = prim->triangles.first;
+    while (p) {
+        next = p->next;
+        free(p);
+        p = next;
+    }
+}

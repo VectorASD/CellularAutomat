@@ -10,3 +10,4 @@ void draw_triangle(struct Context *ctx, GLfloat x1, GLfloat y1, GLfloat x2, GLfl
 void draw_box(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat height);
 
 void render_primitives(struct Context *ctx);
+void free_primitives(struct Context *ctx);
