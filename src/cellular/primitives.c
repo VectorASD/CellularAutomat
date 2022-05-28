@@ -215,7 +215,7 @@ struct CharNode *load_glyph(struct Context *ctx, uint code) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    printf("Удачная загрузка: %u\n", code);
+    
     struct CharNode character = {
         NULL, NULL, {texture, vector2_new(face->glyph->bitmap.width, face->glyph->bitmap.rows), vector2_new(face->glyph->bitmap_left, face->glyph->bitmap_top), face->glyph->advance.x}, code, font->current_height};
     struct CharNode *res = malloc(sizeof(struct CharNode));
@@ -262,7 +262,17 @@ void render_text(struct Context *ctx, text str, GLfloat x, GLfloat y, GLfloat sc
     GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
     int let = 0;
     while (str[let]) {
-        struct Character *glyph = get_glyph(ctx, str[let++] & 255);
+        uint code = (byte) str[let++];
+        if (code >> 5 == 6 && (byte) str[let] >> 6 == 2)
+            code = (code & 31) << 6 | (str[let++] & 63);
+        else if (code >> 4 == 14 && (byte) str[let] >> 6 == 2 && (byte) str[let + 1] >> 6 == 2) {
+            code = (code & 15) << 12 | (str[let] & 63) << 6 | (str[let + 1] & 63);
+            let += 2;
+        } else if (code >> 3 == 30 && (byte) str[let] >> 6 == 2 && (byte) str[let + 1] >> 6 == 2 && (byte) str[let + 2] >> 6 == 2) {
+            code = (code & 7) << 18 | (str[let] & 63) << 12 | (str[let + 1] & 63) << 6 | (str[let + 2] & 63);
+            let += 3;
+        }
+        struct Character *glyph = get_glyph(ctx, code);
 
         GLfloat xpos = x + glyph->bearing.x * scale;
         GLfloat ypos = y - (glyph->size.y - glyph->bearing.y) * scale;

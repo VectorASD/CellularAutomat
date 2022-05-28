@@ -122,7 +122,7 @@ GLuint build_font_program() {
         uniform vec4 char_color;
         void main() {
             vec4 sampled = vec4(1, 1, 1, texture(char, tex_coords).r);
-            color = vec4(0, 0, 1, 1) * sampled;
+            color = char_color * sampled;
         }
     )glsl";
     return build_program(vertex_shader_source, fragment_shader_source);
