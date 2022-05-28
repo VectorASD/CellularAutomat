@@ -281,7 +281,7 @@ void global_gui(struct Context *ctx) {
     glDisable(GL_CULL_FACE);
     render_primitives(ctx);
     set_text_color(ctx, 0, 0, 255, 255);
-    render_text(ctx, "1234567890.,;-+=!/()АБВ😀丣", 5, 45, 0.5);
+    render_text(ctx, "1234567890.,АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ\nабвгдеёжзийклмнопрстуфхцчшщъыьэюя!()-+_=:;|", 5, 5, 24);
 }
 
 void render_scene(struct Context *ctx) {

@@ -90,6 +90,7 @@ struct Character {
     vec2 size;
     vec2 bearing;
     GLuint advance;
+    uint code;
 };
 
 struct CharNode {

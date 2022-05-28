@@ -168,7 +168,7 @@ void init_fonts(struct Context *ctx) {
     printf("  Число глифов: %lu\n", face->num_glyphs);
     printf("  Название: %s\n", face->family_name);
     printf("  Стиль: %s\n", face->style_name);
-    set_font_height(ctx, 96);
+    set_font_height(ctx, 100);
 
     glGenVertexArrays(1, &font->VAO);
     glGenBuffers(1, &font->VBO);
@@ -215,9 +215,9 @@ struct CharNode *load_glyph(struct Context *ctx, uint code) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
+
     struct CharNode character = {
-        NULL, NULL, {texture, vector2_new(face->glyph->bitmap.width, face->glyph->bitmap.rows), vector2_new(face->glyph->bitmap_left, face->glyph->bitmap_top), face->glyph->advance.x}, code, font->current_height};
+        NULL, NULL, {texture, vector2_new(face->glyph->bitmap.width, face->glyph->bitmap.rows), vector2_new(face->glyph->bitmap_left, face->glyph->bitmap_top), face->glyph->advance.x, code}, code, font->current_height};
     struct CharNode *res = malloc(sizeof(struct CharNode));
     memcpy(res, &character, sizeof(struct CharNode));
     return res;
@@ -260,7 +260,12 @@ void render_text(struct Context *ctx, text str, GLfloat x, GLfloat y, GLfloat sc
     glBindVertexArray(font->VAO);
 
     GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
-    int let = 0;
+    scale /= font->current_height;
+
+    int bytes = 0, size = 0, let = 0;
+    while (str[bytes]) bytes++;
+    struct Character *glyphs[bytes];
+    GLfloat max_size = get_glyph(ctx, '(')->size.y;
     while (str[let]) {
         uint code = (byte) str[let++];
         if (code >> 5 == 6 && (byte) str[let] >> 6 == 2)
@@ -273,9 +278,16 @@ void render_text(struct Context *ctx, text str, GLfloat x, GLfloat y, GLfloat sc
             let += 3;
         }
         struct Character *glyph = get_glyph(ctx, code);
+        glyphs[size++] = glyph;
+        if (max_size < glyph->size.y) max_size = glyph->size.y;
+    }
+    y += max_size * scale;
+    GLfloat start_x = x;
+    for (let = 0; let < size; let++) {
+        struct Character *glyph = glyphs[let];
 
         GLfloat xpos = x + glyph->bearing.x * scale;
-        GLfloat ypos = y - (glyph->size.y - glyph->bearing.y) * scale;
+        GLfloat ypos = y + (glyph->size.y - glyph->bearing.y) * scale;
 
         GLfloat w = glyph->size.x * scale;
         GLfloat h = glyph->size.y * scale;
@@ -300,7 +312,10 @@ void render_text(struct Context *ctx, text str, GLfloat x, GLfloat y, GLfloat sc
 
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        x += (glyph->advance >> 6) * scale;
+        if (glyph->code == '\n')
+            x = start_x, y += max_size * scale;
+        else
+            x += (glyph->advance >> 6) * scale;
     }
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
