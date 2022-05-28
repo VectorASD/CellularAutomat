@@ -103,3 +103,27 @@ GLuint build_gui_program() {
     )glsl";
     return build_program(vertex_shader_source, fragment_shader_source);
 }
+
+GLuint build_font_program() {
+    text vertex_shader_source = R"glsl(
+        #version 330 core
+        layout (location = 0) in vec4 vertex;
+        out vec2 tex_coords;
+        void main() {
+            gl_Position = vec4(vertex.xy, -1, 1);
+            tex_coords = vertex.zw;
+        }
+    )glsl";
+    text fragment_shader_source = R"glsl(
+        #version 330 core
+        in vec2 tex_coords;
+        out vec4 color;
+        uniform sampler2D char;
+        uniform vec4 char_color;
+        void main() {
+            vec4 sampled = vec4(1, 1, 1, texture(char, tex_coords).r);
+            color = vec4(0, 0, 1, 1) * sampled;
+        }
+    )glsl";
+    return build_program(vertex_shader_source, fragment_shader_source);
+}

@@ -85,9 +85,30 @@ struct Primitives {
     vec4 tri_color4;
 };
 
+struct Character {
+    GLuint texture_id;
+    vec2 size;
+    vec2 bearing;
+    GLuint advance;
+};
+
+struct CharNode {
+    struct CharNode *left, *right;
+    struct Character chr;
+    uint code;
+    ushort height;
+};
+
 struct Font {
     FT_Library ft; // в freetype/freetype.h на 1072 строчке описана эта структура
     FT_Face face;
+    struct CharNode *map;
+    uint current_height;
+    GLuint font_program;
+    GLint color_loc;
+    vec4 text_color;
+    GLuint VBO;
+    GLuint VAO;
 };
 
 struct Context {
@@ -112,7 +133,7 @@ struct Context {
     GLint main_color_loc;
     GLint edge_color_loc;
     GLint color_mode_loc;
-    GLint gui_program;
+    GLuint gui_program;
     GLuint shader_program;
     struct Primitives prim;
     struct Font font;

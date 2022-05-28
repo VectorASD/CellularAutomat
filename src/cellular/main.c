@@ -90,6 +90,9 @@ int main(int argc, char *argv[]) {
     upd_projection_mat(&ctx);
     upd_view_mat(&ctx);
     ctx.gui_program = build_gui_program();
+    GLuint font_program = build_font_program();
+    ctx.font.font_program = font_program;
+    ctx.font.color_loc = glGetUniformLocation(font_program, "char_color");
 
     int pred_sec;
     int frames = 0;
@@ -116,6 +119,8 @@ int main(int argc, char *argv[]) {
     } while (glfwWindowShouldClose(window) == 0);
 
     glDeleteProgram(shader_program);
+    glDeleteProgram(ctx.gui_program);
+    glDeleteProgram(ctx.font.font_program);
     free_scenes(&ctx);
 
     glfwDestroyWindow(window);

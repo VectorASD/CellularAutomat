@@ -274,13 +274,14 @@ void select_scene(struct Context *ctx, uint id) {
 }
 
 void global_gui(struct Context *ctx) {
-    glUseProgram(ctx->gui_program);
-    glDisable(GL_CULL_FACE);
     for (int i = 0; i < 10; i++)
         draw_line(ctx, 100 + i * 15, 100, 500 + i * 15, 500);
     draw_triangle(ctx, 100, 400, 100, 500, 200, 500);
     draw_box(ctx, 500, 100, 100, 100);
+    glDisable(GL_CULL_FACE);
     render_primitives(ctx);
+    set_text_color(ctx, 0, 0, 255, 255);
+    render_text(ctx, "1234567890.,;-+=!/()АБВ", 5, 45, 0.5);
 }
 
 void render_scene(struct Context *ctx) {
