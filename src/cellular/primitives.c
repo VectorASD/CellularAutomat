@@ -30,9 +30,10 @@ void init_primitives(struct Context *ctx) {
     prim->line_color = vector4_new(1, 1, 0, 1);
     prim->line_color2 = vector4_new(0, 0, 1, 0.5);
     prim->tri_color = vector4_new(0, 1, 0, 1);
-    prim->tri_color2 = vector4_new(0, 0, 1, 0.5);
+    prim->tri_color2 = vector4_new(0, 0, 1, 1);
     prim->tri_color3 = vector4_new(1, 1, 0, 1);
     prim->tri_color4 = vector4_new(1, 0.5, 0, 1);
+    prim->all_prims_n = 0;
 
     init_fonts(ctx);
 }
@@ -56,10 +57,11 @@ void add_vertex_node(GLfloat aspect, struct VertexList *list, GLfloat x, GLfloat
     list->n++;
 }
 
-void nodes_to_array(struct VertexList *list, GLfloat *arr) {
+void nodes_to_array(struct VertexList *list, GLfloat *arr, int all_n) {
     struct VertexNode *p = list->first;
     int pos = 0;
     for (int i = 0; i < list->n; i++) {
+        p->z = -0.999 - 0.001 * p->z / all_n;
         memcpy(arr + pos, &p->x, 7 * sizeof(GLfloat));
         pos += 7;
         p = p->next;
@@ -72,17 +74,19 @@ void draw_line(struct Context *ctx, GLfloat x1, GLfloat y1, GLfloat x2, GLfloat 
     struct Primitives *prim = &ctx->prim;
     struct VertexList *lines = &prim->lines;
     GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
-    add_vertex_node(aspect, lines, x1, y1, -0.995, &prim->line_color);
-    add_vertex_node(aspect, lines, x2, y2, -0.995, &prim->line_color2);
+    GLfloat id = prim->all_prims_n++;
+    add_vertex_node(aspect, lines, x1, y1, id, &prim->line_color);
+    add_vertex_node(aspect, lines, x2, y2, id, &prim->line_color2);
 }
 
 void draw_triangle(struct Context *ctx, GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, GLfloat x3, GLfloat y3) {
     struct Primitives *prim = &ctx->prim;
     struct VertexList *triangles = &prim->triangles;
     GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
-    add_vertex_node(aspect, triangles, x1, y1, -0.99, &prim->tri_color);
-    add_vertex_node(aspect, triangles, x2, y2, -0.99, &prim->tri_color2);
-    add_vertex_node(aspect, triangles, x3, y3, -0.99, &prim->tri_color3);
+    GLfloat id = prim->all_prims_n++;
+    add_vertex_node(aspect, triangles, x1, y1, id, &prim->tri_color);
+    add_vertex_node(aspect, triangles, x2, y2, id, &prim->tri_color2);
+    add_vertex_node(aspect, triangles, x3, y3, id, &prim->tri_color3);
 }
 
 void draw_box(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat height) {
@@ -90,12 +94,13 @@ void draw_box(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat 
     struct Primitives *prim = &ctx->prim;
     struct VertexList *triangles = &prim->triangles;
     GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
-    add_vertex_node(aspect, triangles, x, y, -0.99, &prim->tri_color);
-    add_vertex_node(aspect, triangles, x2, y, -0.99, &prim->tri_color2);
-    add_vertex_node(aspect, triangles, x2, y2, -0.99, &prim->tri_color4);
-    add_vertex_node(aspect, triangles, x, y, -0.99, &prim->tri_color);
-    add_vertex_node(aspect, triangles, x, y2, -0.99, &prim->tri_color3);
-    add_vertex_node(aspect, triangles, x2, y2, -0.99, &prim->tri_color4);
+    GLfloat id = prim->all_prims_n++;
+    add_vertex_node(aspect, triangles, x, y, id, &prim->tri_color);
+    add_vertex_node(aspect, triangles, x2, y, id, &prim->tri_color2);
+    add_vertex_node(aspect, triangles, x2, y2, id, &prim->tri_color4);
+    add_vertex_node(aspect, triangles, x, y, id, &prim->tri_color);
+    add_vertex_node(aspect, triangles, x, y2, id, &prim->tri_color3);
+    add_vertex_node(aspect, triangles, x2, y2, id, &prim->tri_color4);
 }
 
 void set_line_color(struct Context *ctx, float R, float G, float B, float A) {
@@ -118,15 +123,16 @@ void render_primitives(struct Context *ctx) {
     glBindVertexArray(prim->VAO);
     glBindBuffer(GL_ARRAY_BUFFER, prim->VBO);
 
-    nodes_to_array(&prim->lines, vertices);
-    glBufferData(GL_ARRAY_BUFFER, 7 * sizeof(GLfloat) * lines_n, vertices, GL_STREAM_DRAW);
-    glDrawArrays(GL_LINES, 0, lines_n);
-
-    nodes_to_array(&prim->triangles, vertices);
+    nodes_to_array(&prim->triangles, vertices, prim->all_prims_n);
     glBufferData(GL_ARRAY_BUFFER, 7 * sizeof(GLfloat) * triangles_n, vertices, GL_STREAM_DRAW);
     glDrawArrays(GL_TRIANGLES, 0, triangles_n);
 
+    nodes_to_array(&prim->lines, vertices, prim->all_prims_n);
+    glBufferData(GL_ARRAY_BUFFER, 7 * sizeof(GLfloat) * lines_n, vertices, GL_STREAM_DRAW);
+    glDrawArrays(GL_LINES, 0, lines_n);
+
     glBindVertexArray(0);
+    prim->all_prims_n = 0;
 }
 
 void free_primitives(struct Context *ctx) {

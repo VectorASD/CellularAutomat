@@ -83,6 +83,7 @@ struct Primitives {
     vec4 tri_color2;
     vec4 tri_color3;
     vec4 tri_color4;
+    int all_prims_n;
 };
 
 struct Character {

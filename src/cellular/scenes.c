@@ -274,13 +274,24 @@ void select_scene(struct Context *ctx, uint id) {
 }
 
 void global_gui(struct Context *ctx) {
+    set_text_color(ctx, 0, 0, 255, 255);
     for (int i = 0; i < 10; i++)
         draw_line(ctx, 100 + i * 15, 100, 500 + i * 15, 500);
-    draw_triangle(ctx, 100, 400, 100, 500, 200, 500);
-    draw_box(ctx, 500, 100, 100, 100);
-    glDisable(GL_CULL_FACE);
+    float *alpha2 = &ctx->prim.tri_color2.w;
+    float *alpha3 = &ctx->prim.tri_color3.w;
+    *alpha3 = 0;
+    draw_triangle(ctx, 100, 300, 100, 500, 300, 500);
+    *alpha2 = 0.5;
+    draw_box(ctx, 500, 80, 200, 200);
+    *alpha2 = *alpha3 = 1;
+    draw_box(ctx, 600, 300, 100, 100);
+    for (int a = 0; a < 32; a++) {
+        float asin = sin(a * M_PI / 16);
+        float acos = cos(a * M_PI / 16);
+        draw_line(ctx, 650 - acos * 30, 350 - asin * 30, 650 + acos * 150, 350 + asin * 150);
+    }
+    draw_box(ctx, 680, 220, 100, 100);
     render_primitives(ctx);
-    set_text_color(ctx, 0, 0, 255, 255);
     render_text(ctx, "1234567890.,АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ\nабвгдеёжзийклмнопрстуфхцчшщъыьэюя!()-+_=:;|", 5, 5, 24);
 }
 
@@ -298,6 +309,7 @@ void render_scene(struct Context *ctx) {
         render_part(ctx, p);
         p = p->next;
     }
+    glDisable(GL_CULL_FACE);
     global_gui(ctx);
     glUseProgram(ctx->shader_program);
 }
