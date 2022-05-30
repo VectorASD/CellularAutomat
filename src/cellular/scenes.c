@@ -293,6 +293,8 @@ void global_gui(struct Context *ctx) {
     draw_box(ctx, 680, 220, 100, 100);
     render_primitives(ctx);
     render_text(ctx, "1234567890.,АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ\nабвгдеёжзийклмнопрстуфхцчшщъыьэюя!()-+_=:;|", 5, 5, 24);
+    for (int i = 0; i < 6; i++)
+        render_text(ctx, ctx->fps_view[(ctx->fps_view_n + i) % 6], 5, 600 - 3 - 15 * (6 - i), 15);
 }
 
 void render_scene(struct Context *ctx) {

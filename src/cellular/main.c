@@ -108,7 +108,8 @@ int main(int argc, char *argv[]) {
         ctx.last_frame_time = time;
         if ((int) time != pred_sec) {
             pred_sec = time;
-            printf("time: %2u   fps: %u\n", pred_sec, frames);
+            sprintf(ctx.fps_view[ctx.fps_view_n], "время: %2u   fps: %u\n", pred_sec, frames);
+            ctx.fps_view_n = (ctx.fps_view_n + 1) % 6;
             frames = 0;
         }
 

@@ -139,6 +139,8 @@ struct Context {
     GLuint shader_program;
     struct Primitives prim;
     struct Font font;
+    char fps_view[6][64];
+    byte fps_view_n;
 };
 
 void load_context(struct Context *ctx);

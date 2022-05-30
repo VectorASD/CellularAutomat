@@ -29,6 +29,8 @@ void load_context(struct Context *ctx) {
     ctx->last_model = NULL;
     ctx->models_n = 0;
     srand(time(NULL));
+    for (int i = 0; i < 6 * 64; i++) ctx->fps_view[0][i] = 0;
+    ctx->fps_view_n = 0;
 }
 
 void upd_projection_mat(struct Context *ctx) {
