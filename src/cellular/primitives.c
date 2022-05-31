@@ -1,3 +1,4 @@
+#include <math.h> // fabs, sqrt
 #include <primitives.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,10 +24,10 @@ void init_primitives(struct Context *ctx) {
 
     prim->lines.first = NULL;
     prim->lines.last = NULL;
-    prim->lines.n = 0;
+    prim->lines.n = prim->lines.dropped_n = 0;
     prim->triangles.first = NULL;
     prim->triangles.last = NULL;
-    prim->triangles.n = 0;
+    prim->triangles.n = prim->triangles.dropped_n = 0;
     prim->line_color = vector4_new(1, 1, 0, 1);
     prim->line_color2 = vector4_new(0, 0, 1, 0.5);
     prim->tri_color = vector4_new(0, 1, 0, 1);
@@ -34,14 +35,19 @@ void init_primitives(struct Context *ctx) {
     prim->tri_color3 = vector4_new(1, 1, 0, 1);
     prim->tri_color4 = vector4_new(1, 0.5, 0, 1);
     prim->all_prims_n = 0;
+    prim->btn_id = -1;
+    prim->buttons = 0;
+    prim->btn_callback = NULL;
 
     init_fonts(ctx);
 }
 
-void add_vertex_node(GLfloat aspect, struct VertexList *list, GLfloat x, GLfloat y, GLfloat z, vec4 *color) {
+void add_vertex_node(struct Context *ctx, struct VertexList *list, GLfloat x, GLfloat y, GLfloat z, vec4 *color) {
+    struct Primitives *prim = &ctx->prim;
+    GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
     x = x * aspect / 600 * 2 - 1;
     y = 1 - y / 600 * 2;
-    struct VertexNode orig = {NULL, x, y, z, color->x, color->y, color->z, color->w};
+    struct VertexNode orig = {NULL, x, y, z, color->x, color->y, color->z, color->w, prim->btn_id, prim->btn_callback};
     if (list->first == NULL) {
         struct VertexNode *vertex = malloc(sizeof(struct VertexNode));
         memcpy(vertex, &orig, sizeof(struct VertexNode));
@@ -57,60 +63,88 @@ void add_vertex_node(GLfloat aspect, struct VertexList *list, GLfloat x, GLfloat
     list->n++;
 }
 
-void nodes_to_array(struct VertexList *list, GLfloat *arr, int all_n) {
+void nodes_to_array(struct Context *ctx, struct VertexList *list, GLfloat *arr, int all_n, short hover_btn_id) {
     struct VertexNode *p = list->first;
     int pos = 0;
     for (int i = 0; i < list->n; i++) {
         p->z = -0.999 - 0.001 * p->z / all_n;
+        if (p->btn_id >= 0) {
+            byte is_hovered = p->btn_id == hover_btn_id;
+            byte is_pressed = 0;
+            for (byte key = 0; key < 8; key++)
+                if (ctx->btn_id_press[key] == p->btn_id) is_pressed = 1;
+            if (is_pressed) {
+                p->r *= 1.1;
+                p->g *= 1.1;
+                p->b *= 1.1;
+            } else if (is_hovered) {
+                p->r /= 1.3;
+                p->g /= 1.3;
+                p->b /= 1.3;
+            }
+        }
         memcpy(arr + pos, &p->x, 7 * sizeof(GLfloat));
         pos += 7;
         p = p->next;
     }
     list->last = list->first;
+    list->dropped_n = list->n;
     list->n = 0;
 }
 
 void draw_line(struct Context *ctx, GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2) {
     struct Primitives *prim = &ctx->prim;
     struct VertexList *lines = &prim->lines;
-    GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
     GLfloat id = prim->all_prims_n++;
-    add_vertex_node(aspect, lines, x1, y1, id, &prim->line_color);
-    add_vertex_node(aspect, lines, x2, y2, id, &prim->line_color2);
+    add_vertex_node(ctx, lines, x1, y1, id, &prim->line_color);
+    add_vertex_node(ctx, lines, x2, y2, id, &prim->line_color2);
 }
 
 void draw_triangle(struct Context *ctx, GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2, GLfloat x3, GLfloat y3) {
     struct Primitives *prim = &ctx->prim;
     struct VertexList *triangles = &prim->triangles;
-    GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
     GLfloat id = prim->all_prims_n++;
-    add_vertex_node(aspect, triangles, x1, y1, id, &prim->tri_color);
-    add_vertex_node(aspect, triangles, x2, y2, id, &prim->tri_color2);
-    add_vertex_node(aspect, triangles, x3, y3, id, &prim->tri_color3);
+    add_vertex_node(ctx, triangles, x1, y1, id, &prim->tri_color);
+    add_vertex_node(ctx, triangles, x2, y2, id, &prim->tri_color2);
+    add_vertex_node(ctx, triangles, x3, y3, id, &prim->tri_color3);
 }
 
 void draw_box(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat height) {
     GLfloat x2 = x + width, y2 = y + height;
     struct Primitives *prim = &ctx->prim;
     struct VertexList *triangles = &prim->triangles;
-    GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
     GLfloat id = prim->all_prims_n++;
-    add_vertex_node(aspect, triangles, x, y, id, &prim->tri_color);
-    add_vertex_node(aspect, triangles, x2, y, id, &prim->tri_color2);
-    add_vertex_node(aspect, triangles, x2, y2, id, &prim->tri_color4);
-    add_vertex_node(aspect, triangles, x, y, id, &prim->tri_color);
-    add_vertex_node(aspect, triangles, x, y2, id, &prim->tri_color3);
-    add_vertex_node(aspect, triangles, x2, y2, id, &prim->tri_color4);
+    add_vertex_node(ctx, triangles, x, y, id, &prim->tri_color);
+    add_vertex_node(ctx, triangles, x2, y, id, &prim->tri_color2);
+    add_vertex_node(ctx, triangles, x2, y2, id, &prim->tri_color4);
+    add_vertex_node(ctx, triangles, x, y, id, &prim->tri_color);
+    add_vertex_node(ctx, triangles, x, y2, id, &prim->tri_color3);
+    add_vertex_node(ctx, triangles, x2, y2, id, &prim->tri_color4);
+}
+
+void draw_rect(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat height) {
+    GLfloat x2 = x + width, y2 = y + height;
+    struct Primitives *prim = &ctx->prim;
+    struct VertexList *lines = &prim->lines;
+    GLfloat id = prim->all_prims_n++;
+    add_vertex_node(ctx, lines, x - 2, y, id, &prim->line_color);
+    add_vertex_node(ctx, lines, x2 + 1, y, id, &prim->line_color);
+    add_vertex_node(ctx, lines, x2, y, id, &prim->line_color);
+    add_vertex_node(ctx, lines, x2, y2, id, &prim->line_color2);
+    add_vertex_node(ctx, lines, x, y, id, &prim->line_color);
+    add_vertex_node(ctx, lines, x, y2, id, &prim->line_color2);
+    add_vertex_node(ctx, lines, x - 2, y2, id, &prim->line_color2);
+    add_vertex_node(ctx, lines, x2 + 1, y2, id, &prim->line_color2);
+}
+
+void draw_rect_box(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat height) {
+    draw_box(ctx, x, y, width, height);
+    draw_rect(ctx, x, y, width, height);
 }
 
 void set_line_color(struct Context *ctx, float R, float G, float B, float A) {
     struct Primitives *prim = &ctx->prim;
     prim->line_color = prim->line_color2 = vector4_new(R / 255, G / 255, B / 255, A / 255);
-}
-
-void set_box_color(struct Context *ctx, float R, float G, float B, float A) {
-    struct Primitives *prim = &ctx->prim;
-    prim->tri_color = prim->tri_color2 = prim->tri_color3 = prim->tri_color4 = vector4_new(R / 255, G / 255, B / 255, A / 255);
 }
 
 void render_primitives(struct Context *ctx) {
@@ -119,21 +153,24 @@ void render_primitives(struct Context *ctx) {
     struct Primitives *prim = &ctx->prim;
     int lines_n = prim->lines.n;
     int triangles_n = prim->triangles.n;
+    short hover_btn_id = calculate_hovered_button(ctx, 0);
+
     GLfloat vertices[7 * (lines_n > triangles_n ? lines_n : triangles_n)];
 
     glBindVertexArray(prim->VAO);
     glBindBuffer(GL_ARRAY_BUFFER, prim->VBO);
 
-    nodes_to_array(&prim->triangles, vertices, prim->all_prims_n);
+    nodes_to_array(ctx, &prim->triangles, vertices, prim->all_prims_n, hover_btn_id);
     glBufferData(GL_ARRAY_BUFFER, 7 * sizeof(GLfloat) * triangles_n, vertices, GL_STREAM_DRAW);
     glDrawArrays(GL_TRIANGLES, 0, triangles_n);
 
-    nodes_to_array(&prim->lines, vertices, prim->all_prims_n);
+    nodes_to_array(ctx, &prim->lines, vertices, prim->all_prims_n, hover_btn_id);
     glBufferData(GL_ARRAY_BUFFER, 7 * sizeof(GLfloat) * lines_n, vertices, GL_STREAM_DRAW);
     glDrawArrays(GL_LINES, 0, lines_n);
 
     glBindVertexArray(0);
     prim->all_prims_n = 0;
+    prim->buttons = 0;
 }
 
 void free_primitives(struct Context *ctx) {
@@ -344,4 +381,64 @@ void free_fonts(struct Context *ctx) {
     free_map(font->map, 0);
     glDeleteBuffers(1, &font->VBO);
     glDeleteVertexArrays(1, &font->VAO);
+}
+
+//
+// Кнопки
+//
+
+void draw_btn_rect(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat height) {
+    GLfloat x2 = x + width, y2 = y + height;
+    GLfloat h2 = height / 2;
+    struct Primitives *prim = &ctx->prim;
+    struct VertexList *lines = &prim->lines;
+    GLfloat id = prim->all_prims_n++;
+    add_vertex_node(ctx, lines, x - 2, y, id, &prim->line_color);
+    add_vertex_node(ctx, lines, x2 + 1, y, id, &prim->line_color);
+    add_vertex_node(ctx, lines, x, y, id, &prim->line_color);
+    add_vertex_node(ctx, lines, x, y + h2, id, &prim->line_color);
+    add_vertex_node(ctx, lines, x2, y, id, &prim->line_color);
+    add_vertex_node(ctx, lines, x2, y + h2, id, &prim->line_color);
+
+    add_vertex_node(ctx, lines, x, y + h2, id, &prim->line_color2);
+    add_vertex_node(ctx, lines, x, y2, id, &prim->line_color2);
+    add_vertex_node(ctx, lines, x2, y + h2, id, &prim->line_color2);
+    add_vertex_node(ctx, lines, x2, y2, id, &prim->line_color2);
+    add_vertex_node(ctx, lines, x - 2, y2, id, &prim->line_color2);
+    add_vertex_node(ctx, lines, x2 + 1, y2, id, &prim->line_color2);
+}
+
+void draw_button(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat height, void (*btn_callback)(struct Scene *scene, byte button)) {
+    struct Primitives *prim = &ctx->prim;
+    prim->btn_id = prim->buttons++;
+    prim->btn_callback = btn_callback;
+    GLfloat h2 = height / 2;
+    vec4 color = prim->tri_color, color2 = prim->tri_color2, color3 = prim->tri_color3, color4 = prim->tri_color4;
+    prim->tri_color3 = color;
+    prim->tri_color4 = color2;
+    draw_box(ctx, x, y, width, h2);
+    prim->tri_color = prim->tri_color3 = color3;
+    prim->tri_color2 = prim->tri_color4 = color4;
+    draw_box(ctx, x, y + h2, width, h2);
+    prim->tri_color = color;
+    prim->tri_color2 = color2;
+    draw_btn_rect(ctx, x, y, width, height);
+    prim->btn_id = -1;
+    prim->btn_callback = NULL;
+}
+
+void set_box_color(struct Context *ctx, float R, float G, float B, float A) {
+    struct Primitives *prim = &ctx->prim;
+    prim->tri_color = prim->tri_color2 = prim->tri_color3 = prim->tri_color4 = vector4_new(R / 255, G / 255, B / 255, A / 255);
+}
+
+void set_button_color(struct Context *ctx, float box_R, float box_G, float box_B, float line_R, float line_G, float line_B, float A) {
+    A /= 255;
+    struct Primitives *prim = &ctx->prim;
+    prim->line_color = vector4_new(line_R / 255, line_G / 255, line_B / 255, A);
+    prim->line_color2 = vector4_new(line_R / 1.32 / 255, line_G / 1.32 / 255, line_B / 1.32 / 255, A);
+    prim->tri_color = vector4_new(box_R / 255, box_G / 255, box_B / 255, A);
+    prim->tri_color2 = vector4_new(box_R * 1.1 / 255, box_G * 1.1 / 255, box_B * 1.1 / 255, A);
+    prim->tri_color3 = vector4_new(box_R / 1.32 / 255, box_G / 1.32 / 255, box_B / 1.32 / 255, A);
+    prim->tri_color4 = vector4_new(box_R / 1.32 * 1.1 / 255, box_G / 1.32 * 1.1 / 255, box_B / 1.32 * 1.1 / 255, A);
 }

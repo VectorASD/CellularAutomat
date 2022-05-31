@@ -31,6 +31,12 @@ void load_context(struct Context *ctx) {
     srand(time(NULL));
     for (int i = 0; i < 6 * 64; i++) ctx->fps_view[0][i] = 0;
     ctx->fps_view_n = 0;
+    for (int key = 0; key < 8; key++) {
+        ctx->btn_id_press[key] = -1;
+        ctx->btn_id_release[key] = -1;
+        ctx->btn_mouse_pressed[key] = 0;
+    }
+    ctx->mouse_pressed = 0;
 }
 
 void upd_projection_mat(struct Context *ctx) {
@@ -63,6 +69,86 @@ void do_movement(struct Context *ctx) {
         upd_view_mat(ctx);
     }
 }
+
+int randint(int a, int b) {
+    return rand() % (b - a + 1) - a;
+}
+
+float min(float a, float b) {
+    return a > b ? b : a;
+}
+float max(float a, float b) {
+    return a > b ? a : b;
+}
+float line_dist(float x, float y, float x2, float y2) {
+    x -= x2;
+    y -= y2;
+    return sqrt(x * x + y * y);
+}
+float dot_to_line_dist(float x, float y, float x2, float y2, float dot_x, float dot_y) {
+    float a = line_dist(dot_x, dot_y, x, y);
+    float b = line_dist(dot_x, dot_y, x2, y2);
+    float c = line_dist(x, y, x2, y2);
+    if (a * a + c * c >= b * b && b * b + c * c >= a * a) {
+        // Ax + By + C = 0
+        float A = y - y2;
+        float B = x2 - x;
+        float C = x * y2 - x2 * y;
+        return fabs(A * dot_x + B * dot_y + C) / sqrt(A * A + B * B);
+    }
+    return min(a, b);
+}
+
+short calculate_hovered_button(struct Context *ctx, byte use_dropped_n) {
+    float aspect = ctx->window_size.y / ctx->window_size.x;
+    vec2 *pos = &ctx->camera.last_cursor_pos;
+    float x = pos->x * aspect / 600 * 2 - 1;
+    float y = 1 - pos->y / 600 * 2;
+    struct Primitives *prim = &ctx->prim;
+    short id = -1;
+
+    struct VertexList *list = &prim->triangles;
+    struct VertexNode *p = list->first, *pred, *pred2;
+    int triangles_n = (use_dropped_n ? list->dropped_n : list->n) / 3;
+    for (int i = 0; i < triangles_n; i++) {
+        pred = p;
+        p = p->next;
+        pred2 = p;
+        p = p->next;
+        float a = (pred->x - x) * (pred2->y - pred->y) - (pred2->x - pred->x) * (pred->y - y) > 0 ? 1 : -1;
+        float b = (pred2->x - x) * (p->y - pred2->y) - (p->x - pred2->x) * (pred2->y - y) > 0 ? 1 : -1;
+        float c = (p->x - x) * (pred->y - p->y) - (pred->x - p->x) * (p->y - y) > 0 ? 1 : -1;
+        if (a == b && a == c) id = p->btn_id;
+        p = p->next;
+    }
+
+    list = &prim->lines;
+    p = list->first;
+    int lines_n = (use_dropped_n ? list->dropped_n : list->n) / 2;
+    for (int i = 0; i < lines_n; i++) {
+        pred = p;
+        p = p->next;
+        if (dot_to_line_dist(pred->x, pred->y, p->x, p->y, x, y) <= 0.01 && p->btn_id > id) id = p->btn_id;
+        p = p->next;
+    }
+    return id;
+}
+
+void *get_button_callback_by_id(struct Context *ctx, short btn_id) {
+    struct Primitives *prim = &ctx->prim;
+    struct VertexList *list = &prim->triangles;
+    struct VertexNode *p = list->first;
+    int triangles_n = list->dropped_n;
+    for (int i = 0; i < triangles_n; i++) {
+        if (p->btn_id == btn_id) return p->btn_callback;
+        p = p->next;
+    }
+    return NULL;
+}
+
+//
+// Калбаки всех мастей
+//
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
     switch (scancode) {
@@ -103,13 +189,14 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     struct Context *ctx = glfwGetWindowUserPointer(window);
     struct Settings *set = &ctx->settings;
+    struct Camera *camera = &ctx->camera;
     if (set->user_input_dbg) printf("xpos: %3lf   ypos: %3lf\n", xpos, ypos);
     if (ctx->lock_mouse_mode == 0) {
+        camera->last_cursor_pos = vector2_new(xpos, ypos);
         return;
     }
     xpos /= 20;
     ypos /= 20;
-    struct Camera *camera = &ctx->camera;
     float dx = xpos - camera->last_cursor_pos.x;
     float dy = camera->last_cursor_pos.y - ypos;
     if (powf(dx * dx + dy * dy, 0.5) > 100) dx = 0, dy = 0;
@@ -134,11 +221,27 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     struct Context *ctx = glfwGetWindowUserPointer(window);
     struct Settings *set = &ctx->settings;
     if (set->user_input_dbg) printf("button: %d   action: %d   mods: %d\n", button, action, mods);
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        if (ctx->lock_mouse_mode == 0) {
-            ctx->lock_mouse_mode = 1;
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    short btn_id = calculate_hovered_button(ctx, 1);
+    if (action == GLFW_PRESS) {
+        ctx->btn_id_press[button] = btn_id;
+        ctx->btn_mouse_pressed[button] = 1;
+        ctx->mouse_pressed |= 1 << button;
+        if (button == GLFW_MOUSE_BUTTON_LEFT) {
+            if (ctx->lock_mouse_mode == 0 && btn_id == -1) {
+                ctx->lock_mouse_mode = 1;
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            }
         }
+    }
+    if (action == GLFW_RELEASE) {
+        ctx->btn_id_release[button] = btn_id;
+        ctx->btn_mouse_pressed[button] = 0;
+        if (ctx->mouse_pressed & 1 << button) ctx->mouse_pressed ^= 1 << button;
+        if (btn_id >= 0 && btn_id == ctx->btn_id_press[button]) {
+            void (*btn_callback)(struct Scene * scene, byte button) = get_button_callback_by_id(ctx, btn_id);
+            btn_callback(ctx->current_scene, button);
+        }
+        ctx->btn_id_press[button] = -1;
     }
 }
 
@@ -147,8 +250,4 @@ void window_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
     ctx->window_size = vector2_new(width, height);
     upd_projection_mat(ctx);
-}
-
-int randint(int a, int b) {
-    return rand() % (b - a + 1) - a;
 }

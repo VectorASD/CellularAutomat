@@ -76,14 +76,31 @@ void render_scene_0(struct Scene *scene) {
     }
 }
 
+void btn_callback_0(struct Scene *scene, byte button) {
+    text buttons[] = {"ЛКМ", "ПКМ", "СКМ", "доп кнопка #1", "доп кнопка #2", "доп кнопка #3", "доп кнопка #4", "доп кнопка #5"};
+    printf("Нажата ПЕРВАЯ кнопка!!! Нажатие гарантируется только тогда, когда курсор был на ней при нажатии И отпускании %s!\n", buttons[button]);
+}
+
+void btn_callback_1(struct Scene *scene, byte button) {
+    text buttons[] = {"ЛКМ", "ПКМ", "СКМ", "доп кнопка #1", "доп кнопка #2", "доп кнопка #3", "доп кнопка #4", "доп кнопка #5"};
+    printf("Нажата ВТОРАЯ кнопка!!! Нажатие гарантируется только тогда, когда курсор был на ней при нажатии И отпускании %s!\n", buttons[button]);
+}
+
 void gui_scene_0(struct Scene *scene) {
     struct Context *ctx = scene->ctx;
+    struct Primitives *prim = &ctx->prim;
     float color = radians(ctx->time * 16);
     set_text_color(ctx, 191 + sin(color * 4) * 64, 191 + sin(color * 5) * 64, 191 + sin(color * 7) * 64, 255);
+    prim->line_color = vector4_new(1, 1, 0, 1);
+    prim->line_color2 = vector4_new(0, 0, 1, 0.5);
+    prim->tri_color = vector4_new(0, 1, 0, 1);
+    prim->tri_color2 = vector4_new(0, 0, 1, 1);
+    prim->tri_color3 = vector4_new(1, 1, 0, 1);
+    prim->tri_color4 = vector4_new(1, 0.5, 0, 1);
     for (int i = 0; i < 10; i++)
         draw_line(ctx, 100 + i * 15, 100, 500 + i * 15, 500);
-    float *alpha2 = &ctx->prim.tri_color2.w;
-    float *alpha3 = &ctx->prim.tri_color3.w;
+    float *alpha2 = &prim->tri_color2.w;
+    float *alpha3 = &prim->tri_color3.w;
     *alpha3 = 0;
     draw_triangle(ctx, 100, 300, 100, 500, 300, 500);
     *alpha2 = 0.5;
@@ -96,8 +113,12 @@ void gui_scene_0(struct Scene *scene) {
         draw_line(ctx, 650 - acos * 30, 350 - asin * 30, 650 + acos * 150, 350 + asin * 150);
     }
     draw_box(ctx, 680, 220, 100, 100);
-    render_primitives(ctx);
     render_text(ctx, "1234567890.,АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ\nабвгдеёжзийклмнопрстуфхцчшщъыьэюя!()-+_=:;|~/\\", 5, 5, 24);
     for (int i = 0; i < 6; i++)
         render_text(ctx, ctx->fps_view[(ctx->fps_view_n + i) % 6], 5, 600 - 7 - 15 * (6 - i), 15);
+
+    set_button_color(ctx, 255, 255, 0, 0, 0, 255, 255);
+    draw_button(ctx, 100, 100, 100, 64, btn_callback_0);
+    set_button_color(ctx, 0, 255, 0, 255, 0, 255, 255);
+    draw_button(ctx, 100, 170, 100, 64, btn_callback_1);
 }

@@ -273,9 +273,19 @@ void select_scene(struct Context *ctx, uint id) {
     exit(5);
 }
 
+void btn_callback_global_gui(struct Scene *scene, byte button) {
+    text buttons[] = {"ЛКМ", "ПКМ", "СКМ", "доп кнопку #1", "доп кнопку #2", "доп кнопку #3", "доп кнопку #4", "доп кнопку #5"};
+    printf("А это кнопка из глобального GUI. Заметьте, что пересечение кнопок не мешает нормально им функционировать! Вы нажали %s!\n", buttons[button]);
+}
+
 void global_gui(struct Context *ctx) {
     struct Scene *scene = ctx->current_scene;
     if (scene->local_gui != NULL) scene->local_gui(scene);
+
+    set_button_color(ctx, 255, 128, 0, 255, 0, 0, 255);
+    draw_button(ctx, 170, 135, 100, 64, btn_callback_global_gui);
+
+    render_primitives(ctx);
 }
 
 void render_scene(struct Context *ctx) {
