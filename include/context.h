@@ -58,6 +58,8 @@ struct Scene {
     struct Context *ctx;
     void (*init)(struct Scene *scene);
     void (*render)(struct Scene *scene);
+    void (*local_gui)(struct Scene *scene);
+    void (*free)(struct Scene *scene);
     byte first_tick;
 };
 

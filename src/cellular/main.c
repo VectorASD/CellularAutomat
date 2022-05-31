@@ -58,7 +58,6 @@ GLFWwindow *glfw_glew_init(struct Context *ctx) {
 
     glPointSize(5);
     glLineWidth(3);
-    glEnable(GL_DEPTH_TEST);
     glCullFace(GL_FRONT);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -74,7 +73,7 @@ int main(int argc, char *argv[]) {
     init_models(&ctx);
     init_primitives(&ctx);
 
-    uint scene_0 = bind_scene(&ctx, init_scene_0, render_scene_0);
+    uint scene_0 = bind_scene(&ctx, init_scene_0, render_scene_0, gui_scene_0, NULL);
 
     select_scene(&ctx, scene_0);
 

@@ -114,6 +114,7 @@ void set_box_color(struct Context *ctx, float R, float G, float B, float A) {
 }
 
 void render_primitives(struct Context *ctx) {
+    glEnable(GL_DEPTH_TEST);
     glUseProgram(ctx->gui_program);
     struct Primitives *prim = &ctx->prim;
     int lines_n = prim->lines.n;
@@ -164,7 +165,7 @@ void init_fonts(struct Context *ctx) {
         printf("Не удаётся инициализировать FreeType библиотеку\n");
         exit(7);
     }
-    if (FT_New_Face(font->ft, "fonts/Airfool.ttf", 0, &font->face)) {
+    if (FT_New_Face(font->ft, "fonts/Bukhari Script.ttf", 0, &font->face)) {
         printf("Не удаётся загрузить шрифт\n");
         exit(8);
     }
@@ -259,6 +260,7 @@ void set_text_color(struct Context *ctx, float R, float G, float B, float A) {
 }
 
 void render_text(struct Context *ctx, text str, GLfloat x, GLfloat y, GLfloat scale) {
+    glDisable(GL_DEPTH_TEST);
     struct Font *font = &ctx->font;
     glUseProgram(font->font_program);
 

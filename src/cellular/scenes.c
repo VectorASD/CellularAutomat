@@ -274,38 +274,20 @@ void select_scene(struct Context *ctx, uint id) {
 }
 
 void global_gui(struct Context *ctx) {
-    set_text_color(ctx, 0, 0, 255, 255);
-    for (int i = 0; i < 10; i++)
-        draw_line(ctx, 100 + i * 15, 100, 500 + i * 15, 500);
-    float *alpha2 = &ctx->prim.tri_color2.w;
-    float *alpha3 = &ctx->prim.tri_color3.w;
-    *alpha3 = 0;
-    draw_triangle(ctx, 100, 300, 100, 500, 300, 500);
-    *alpha2 = 0.5;
-    draw_box(ctx, 500, 80, 200, 200);
-    *alpha2 = *alpha3 = 1;
-    draw_box(ctx, 600, 300, 100, 100);
-    for (int a = 0; a < 32; a++) {
-        float asin = sin(a * M_PI / 16);
-        float acos = cos(a * M_PI / 16);
-        draw_line(ctx, 650 - acos * 30, 350 - asin * 30, 650 + acos * 150, 350 + asin * 150);
-    }
-    draw_box(ctx, 680, 220, 100, 100);
-    render_primitives(ctx);
-    render_text(ctx, "1234567890.,АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ\nабвгдеёжзийклмнопрстуфхцчшщъыьэюя!()-+_=:;|", 5, 5, 24);
-    for (int i = 0; i < 6; i++)
-        render_text(ctx, ctx->fps_view[(ctx->fps_view_n + i) % 6], 5, 600 - 3 - 15 * (6 - i), 15);
+    struct Scene *scene = ctx->current_scene;
+    if (scene->local_gui != NULL) scene->local_gui(scene);
 }
 
 void render_scene(struct Context *ctx) {
     glUseProgram(ctx->shader_program);
+    glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     struct Scene *scene = ctx->current_scene;
     if (scene->first_tick) {
         scene->first_tick = 0;
-        scene->init(scene);
+        if (scene->init != NULL) scene->init(scene);
     }
-    scene->render(scene);
+    if (scene->render != NULL) scene->render(scene);
     struct Part *p = scene->parts;
     while (p) {
         render_part(ctx, p);
@@ -321,20 +303,23 @@ void free_scenes(struct Context *ctx) {
     struct Scene *p = ctx->scenes, *next;
     while (p) {
         next = p->next;
-        free_parts(p);
+        if (p->free != NULL) p->free(p);
         if (p->user_pointer != NULL) free(p->user_pointer);
+        free_parts(p);
         free(p);
         p = next;
     }
     free_primitives(ctx);
 }
 
-uint bind_scene(struct Context *ctx, void (*init)(struct Scene *scene), void (*render)(struct Scene *scene)) {
+uint bind_scene(struct Context *ctx, void (*init)(struct Scene *scene), void (*render)(struct Scene *scene), void (*local_gui)(struct Scene *scene), void (*free)(struct Scene *scene)) {
     uint id = create_scene(ctx);
     select_scene(ctx, id);
     struct Scene *scene = ctx->current_scene;
     scene->init = init;
     scene->render = render;
+    scene->local_gui = local_gui;
+    scene->free = free;
     scene->first_tick = 1;
     return id;
 }
