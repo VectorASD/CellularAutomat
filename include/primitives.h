@@ -14,7 +14,10 @@ void draw_rect(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat
 void draw_rect_box(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat height);
 
 void set_line_color(struct Context *ctx, float R, float G, float B, float A);
+void set_line_gradient_color(struct Context *ctx, float R, float G, float B, float R2, float G2, float B2, float A);
 void set_box_color(struct Context *ctx, float R, float G, float B, float A);
+void set_box_vert_gradient_color(struct Context *ctx, float R, float G, float B, float R2, float G2, float B2, float A);
+void set_box_horiz_gradient_color(struct Context *ctx, float R, float G, float B, float R2, float G2, float B2, float A);
 
 void render_primitives(struct Context *ctx);
 void free_primitives(struct Context *ctx);

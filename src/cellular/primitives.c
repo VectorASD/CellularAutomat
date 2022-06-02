@@ -127,13 +127,13 @@ void draw_rect(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat
     struct Primitives *prim = &ctx->prim;
     struct VertexList *lines = &prim->lines;
     GLfloat id = prim->all_prims_n++;
-    add_vertex_node(ctx, lines, x - 2, y, id, &prim->line_color);
+    add_vertex_node(ctx, lines, x - 1, y, id, &prim->line_color);
     add_vertex_node(ctx, lines, x2 + 1, y, id, &prim->line_color);
     add_vertex_node(ctx, lines, x2, y, id, &prim->line_color);
     add_vertex_node(ctx, lines, x2, y2, id, &prim->line_color2);
     add_vertex_node(ctx, lines, x, y, id, &prim->line_color);
     add_vertex_node(ctx, lines, x, y2, id, &prim->line_color2);
-    add_vertex_node(ctx, lines, x - 2, y2, id, &prim->line_color2);
+    add_vertex_node(ctx, lines, x - 1, y2, id, &prim->line_color2);
     add_vertex_node(ctx, lines, x2 + 1, y2, id, &prim->line_color2);
 }
 
@@ -145,6 +145,26 @@ void draw_rect_box(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLf
 void set_line_color(struct Context *ctx, float R, float G, float B, float A) {
     struct Primitives *prim = &ctx->prim;
     prim->line_color = prim->line_color2 = vector4_new(R / 255, G / 255, B / 255, A / 255);
+}
+void set_line_gradient_color(struct Context *ctx, float R, float G, float B, float R2, float G2, float B2, float A) {
+    struct Primitives *prim = &ctx->prim;
+    prim->line_color = vector4_new(R / 255, G / 255, B / 255, A / 255);
+    prim->line_color2 = vector4_new(R2 / 255, G2 / 255, B2 / 255, A / 255);
+}
+
+void set_box_color(struct Context *ctx, float R, float G, float B, float A) {
+    struct Primitives *prim = &ctx->prim;
+    prim->tri_color = prim->tri_color2 = prim->tri_color3 = prim->tri_color4 = vector4_new(R / 255, G / 255, B / 255, A / 255);
+}
+void set_box_vert_gradient_color(struct Context *ctx, float R, float G, float B, float R2, float G2, float B2, float A) {
+    struct Primitives *prim = &ctx->prim;
+    prim->tri_color = prim->tri_color2 = vector4_new(R / 255, G / 255, B / 255, A / 255);
+    prim->tri_color3 = prim->tri_color4 = vector4_new(R2 / 255, G2 / 255, B2 / 255, A / 255);
+}
+void set_box_horiz_gradient_color(struct Context *ctx, float R, float G, float B, float R2, float G2, float B2, float A) {
+    struct Primitives *prim = &ctx->prim;
+    prim->tri_color = prim->tri_color3 = vector4_new(R / 255, G / 255, B / 255, A / 255);
+    prim->tri_color2 = prim->tri_color4 = vector4_new(R2 / 255, G2 / 255, B2 / 255, A / 255);
 }
 
 void render_primitives(struct Context *ctx) {
@@ -244,16 +264,38 @@ struct CharNode *load_glyph(struct Context *ctx, uint code) {
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
+
+    FT_Bitmap bitmap = face->glyph->bitmap;
+    int width = bitmap.width, rows = bitmap.rows;
+    byte round = 5;
+    byte round_x2 = round * 2;
+    byte new_bitmap[rows + round_x2][width + round_x2];
+    for (int y = -round; y < rows + round; y++)
+        for (int x = -round; x < width + round; x++) {
+            byte alpha = x >= 0 && x < width && y >= 0 && y < rows ? bitmap.buffer[x + y * width] : 0;
+            if (alpha == 255) goto label;
+            for (char j = -round; j <= round; j++) {
+                if (y + j < 0 || y + j >= rows) continue;
+                for (char i = -round; i <= round; i++) {
+                    if (x + i < 0 || x + i >= width || i * i + j * j > round * round || bitmap.buffer[x + i + (y + j) * width] == 0) continue;
+                    alpha = 1;
+                    goto label;
+                }
+            }
+        label:
+            new_bitmap[y + round][x + round] = alpha;
+        }
+
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
         GL_RED,
-        face->glyph->bitmap.width,
-        face->glyph->bitmap.rows,
+        width + round_x2,
+        rows + round_x2,
         0,
         GL_RED,
         GL_UNSIGNED_BYTE,
-        face->glyph->bitmap.buffer);
+        (byte *) new_bitmap);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -306,6 +348,9 @@ void render_text(struct Context *ctx, text str, GLfloat x, GLfloat y, GLfloat sc
 
     GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
     scale /= font->current_height;
+    byte round = 5;
+    x -= round;
+    y -= round;
 
     int bytes = 0, size = 0, let = 0;
     while (str[bytes]) bytes++;
@@ -342,13 +387,14 @@ void render_text(struct Context *ctx, text str, GLfloat x, GLfloat y, GLfloat sc
         w = w * aspect / 600 * 2;
         h = h / 600 * 2;
 
+        float pad = 0.03;
         GLfloat vertices[6][4] = {
-            {xpos, ypos + h, 0, 0},
-            {xpos, ypos, 0, 1},
-            {xpos + w, ypos, 1, 1},
-            {xpos, ypos + h, 0, 0},
-            {xpos + w, ypos, 1, 1},
-            {xpos + w, ypos + h, 1, 0}};
+            {xpos, ypos + h, -pad, -pad},
+            {xpos, ypos, -pad, 1 + pad},
+            {xpos + w, ypos, 1 + pad, 1 + pad},
+            {xpos, ypos + h, -pad, -pad},
+            {xpos + w, ypos, 1 + pad, 1 + pad},
+            {xpos + w, ypos + h, 1 + pad, -pad}};
         glBindTexture(GL_TEXTURE_2D, glyph->texture_id);
 
         glBindBuffer(GL_ARRAY_BUFFER, font->VBO);
@@ -393,7 +439,7 @@ void draw_btn_rect(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLf
     struct Primitives *prim = &ctx->prim;
     struct VertexList *lines = &prim->lines;
     GLfloat id = prim->all_prims_n++;
-    add_vertex_node(ctx, lines, x - 2, y, id, &prim->line_color);
+    add_vertex_node(ctx, lines, x - 1, y, id, &prim->line_color);
     add_vertex_node(ctx, lines, x2 + 1, y, id, &prim->line_color);
     add_vertex_node(ctx, lines, x, y, id, &prim->line_color);
     add_vertex_node(ctx, lines, x, y + h2, id, &prim->line_color);
@@ -404,7 +450,7 @@ void draw_btn_rect(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLf
     add_vertex_node(ctx, lines, x, y2, id, &prim->line_color2);
     add_vertex_node(ctx, lines, x2, y + h2, id, &prim->line_color2);
     add_vertex_node(ctx, lines, x2, y2, id, &prim->line_color2);
-    add_vertex_node(ctx, lines, x - 2, y2, id, &prim->line_color2);
+    add_vertex_node(ctx, lines, x - 1, y2, id, &prim->line_color2);
     add_vertex_node(ctx, lines, x2 + 1, y2, id, &prim->line_color2);
 }
 
@@ -425,11 +471,6 @@ void draw_button(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLflo
     draw_btn_rect(ctx, x, y, width, height);
     prim->btn_id = -1;
     prim->btn_callback = NULL;
-}
-
-void set_box_color(struct Context *ctx, float R, float G, float B, float A) {
-    struct Primitives *prim = &ctx->prim;
-    prim->tri_color = prim->tri_color2 = prim->tri_color3 = prim->tri_color4 = vector4_new(R / 255, G / 255, B / 255, A / 255);
 }
 
 void set_button_color(struct Context *ctx, float box_R, float box_G, float box_B, float line_R, float line_G, float line_B, float A) {

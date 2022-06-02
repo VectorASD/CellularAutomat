@@ -102,8 +102,8 @@ float dot_to_line_dist(float x, float y, float x2, float y2, float dot_x, float 
 short calculate_hovered_button(struct Context *ctx, byte use_dropped_n) {
     float aspect = ctx->window_size.y / ctx->window_size.x;
     vec2 *pos = &ctx->camera.last_cursor_pos;
-    float x = pos->x * aspect / 600 * 2 - 1;
-    float y = 1 - pos->y / 600 * 2;
+    float x = pos->x * aspect / ctx->window_size.y * 2 - 1;
+    float y = 1 - pos->y / ctx->window_size.y * 2;
     struct Primitives *prim = &ctx->prim;
     short id = -1;
 
@@ -118,7 +118,7 @@ short calculate_hovered_button(struct Context *ctx, byte use_dropped_n) {
         float a = (pred->x - x) * (pred2->y - pred->y) - (pred2->x - pred->x) * (pred->y - y) > 0 ? 1 : -1;
         float b = (pred2->x - x) * (p->y - pred2->y) - (p->x - pred2->x) * (pred2->y - y) > 0 ? 1 : -1;
         float c = (p->x - x) * (pred->y - p->y) - (pred->x - p->x) * (p->y - y) > 0 ? 1 : -1;
-        if (a == b && a == c) id = p->btn_id;
+        if (a == b && a == c && p->btn_id > id) id = p->btn_id;
         p = p->next;
     }
 

@@ -285,6 +285,14 @@ void global_gui(struct Context *ctx) {
     set_button_color(ctx, 255, 128, 0, 255, 0, 0, 255);
     draw_button(ctx, 170, 135, 100, 64, btn_callback_global_gui);
 
+    set_box_vert_gradient_color(ctx, 112, 100, 152, 56, 50, 76, 220);
+    set_line_color(ctx, 64, 64, 64, 220);
+    draw_rect_box(ctx, 0, 0, 300, 300);
+
+    set_line_gradient_color(ctx, 56, 150, 160, 38, 52, 64, 200);
+    set_box_vert_gradient_color(ctx, 15, 68, 84, 16, 34, 42, 200);
+    draw_rect_box(ctx, 50, 50, 200, 200);
+
     render_primitives(ctx);
 }
 
