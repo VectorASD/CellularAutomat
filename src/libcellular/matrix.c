@@ -1,6 +1,5 @@
-#include <GL/glew.h> // GLint, GLfloat, glUniformMatrix4fv
-#include <math.h>    // tan, M_PI, M_PI_2
-#include <matrix.h>
+#include <math.h>   // tan, M_PI, M_PI_2
+#include <matrix.h> //
 #include <stdio.h>  // printf
 #include <string.h> // memcpy
 

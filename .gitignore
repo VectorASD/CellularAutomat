@@ -8,5 +8,5 @@ main
 *.swp
 *~
 
-# A chessboard
-*.html
+# Results of unzipping
+freetype-2.12.1

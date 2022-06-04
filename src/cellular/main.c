@@ -1,14 +1,8 @@
-#define GLEW_STATIC
-#include <GL/glew.h>
-#include <context.h>
+#include <scene_0.h>
 #include <scenes.h>
 #include <shaders.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-//apt-get install libglew-dev libglfw3-dev
-//Главное в будущем не забыть перенести куда-нибудь в Readme это перед отправкой на проверку
-//LFLAGS = ... -lX11 -lpthread -lXrandr -ldl Возможно в будущем что-то из этого понадобиться...
 
 GLFWwindow *glfw_glew_init(struct Context *ctx) {
     if (!glfwInit()) {
@@ -58,8 +52,9 @@ GLFWwindow *glfw_glew_init(struct Context *ctx) {
     glPointSize(5);
     glLineWidth(3);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     return window;
 }
@@ -70,9 +65,11 @@ int main(int argc, char *argv[]) {
     GLFWwindow *window = glfw_glew_init(&ctx);
 
     init_models(&ctx);
+    init_primitives(&ctx);
 
-    uint scene = create_scene(&ctx);
-    select_scene(&ctx, scene);
+    uint scene_0 = bind_scene(&ctx, "Самая первая", init_scene_0, render_scene_0, gui_scene_0, NULL);
+
+    select_scene(&ctx, scene_0);
 
     GLuint shader_program = build_main_program();
     ctx.projection_loc = glGetUniformLocation(shader_program, "projection");
@@ -81,30 +78,14 @@ int main(int argc, char *argv[]) {
     ctx.main_color_loc = glGetUniformLocation(shader_program, "main_color");
     ctx.edge_color_loc = glGetUniformLocation(shader_program, "edge_color");
     ctx.color_mode_loc = glGetUniformLocation(shader_program, "color_mode");
+    ctx.shader_program = shader_program;
     glUseProgram(shader_program);
     upd_projection_mat(&ctx);
     upd_view_mat(&ctx);
-
-    struct Model *cube = get_model_by_id(&ctx, 0);
-    struct Model *sphere = get_model_by_id(&ctx, 1);
-
-    struct Part *part = create_part(&ctx, cube);
-    struct Part *part2 = create_part(&ctx, sphere);
-    part->size = vector3_new(2, 1, 4);
-    part2->size = vector3_new(1, 5, 1);
-    part2->pos = vector3_new(0, 3, 0);
-
-    for (int y = 0; y < 16; y++)
-        for (int z = 0; z < 16; z++)
-            for (int x = 0; x < 16; x++) {
-                struct Part *part = create_part(&ctx, cube);
-                part->pos = vector3_new(x * 2, y * 2, -z * 2 - 2);
-                update_part(part);
-                part->color_mode = (x + y + z) % 4;
-                part->color = vector4_new(x / 16., y / 16., z / 16., 1);
-                part->edge_color = vector4_new(1 - x / 16., 1 - y / 16., 1 - z / 16., 1);
-                part->visible = (x % 5 == 1) + (y % 5 == 2) + (z % 5 == 3) >= 2;
-            }
+    ctx.gui_program = build_gui_program();
+    GLuint font_program = build_font_program();
+    ctx.font.font_program = font_program;
+    ctx.font.color_loc = glGetUniformLocation(font_program, "char_color");
 
     int pred_sec;
     int frames = 0;
@@ -115,23 +96,15 @@ int main(int argc, char *argv[]) {
         do_movement(&ctx);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        float time = glfwGetTime();
+        float time = ctx.time = glfwGetTime();
         ctx.delta_time = time - ctx.last_frame_time;
         ctx.last_frame_time = time;
         if ((int) time != pred_sec) {
             pred_sec = time;
-            printf("time: %2u   fps: %u\n", pred_sec, frames);
+            sprintf(ctx.fps_view[ctx.fps_view_n], "время: %2u   fps: %u\n", pred_sec, frames);
+            ctx.fps_view_n = (ctx.fps_view_n + 1) % 6;
             frames = 0;
         }
-
-        glUseProgram(shader_program);
-
-        float angle = radians(time * 50);
-        part->orientation.y = angle;
-        update_part(part);
-        part2->orientation.x = angle;
-        part2->orientation.y = angle / 5;
-        update_part(part2);
 
         render_scene(&ctx);
 
@@ -140,6 +113,8 @@ int main(int argc, char *argv[]) {
     } while (glfwWindowShouldClose(window) == 0);
 
     glDeleteProgram(shader_program);
+    glDeleteProgram(ctx.gui_program);
+    glDeleteProgram(ctx.font.font_program);
     free_scenes(&ctx);
 
     glfwDestroyWindow(window);

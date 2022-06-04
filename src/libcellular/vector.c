@@ -1,5 +1,6 @@
-#include <math.h>  // powf
-#include <stdio.h> // printf
+#include <math.h>   // powf
+#include <stdio.h>  // printf
+#include <string.h> // memcmp
 #include <vector.h>
 
 //
@@ -27,7 +28,7 @@ vec2 vector2_sub(vec2 a, vec2 b) {
 }
 
 vec2 vector2_sub_s(vec2 a, float scale) {
-    vec3 res = {a.x - scale, a.y - scale};
+    vec2 res = {a.x - scale, a.y - scale};
     return res;
 }
 
@@ -47,7 +48,7 @@ vec2 vector2_div(vec2 a, vec2 b) {
 }
 
 vec2 vector2_div_s(vec2 a, float scale) {
-    vec3 res = {a.x / scale, a.y / scale};
+    vec2 res = {a.x / scale, a.y / scale};
     return res;
 }
 
@@ -67,6 +68,10 @@ void vector2_repr(vec2 vec) {
 
 float vector2_dot(vec2 a, vec2 b) {
     return a.x * b.x + a.y * b.y;
+}
+
+byte vector2_cmp(vec2 a, vec2 b) {
+    return memcmp(&a, &b, sizeof(vec2)) == 0;
 }
 
 //
@@ -141,6 +146,10 @@ float vector3_dot(vec3 a, vec3 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
+byte vector3_cmp(vec3 a, vec3 b) {
+    return memcmp(&a, &b, sizeof(vec3)) == 0;
+}
+
 //
 // Vector4 functions
 //
@@ -206,4 +215,8 @@ void vector4_repr(vec4 vec) {
 
 float vector4_dot(vec4 a, vec4 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
+byte vector4_cmp(vec4 a, vec4 b) {
+    return memcmp(&a, &b, sizeof(vec4)) == 0;
 }

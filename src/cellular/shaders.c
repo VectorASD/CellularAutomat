@@ -81,3 +81,51 @@ GLuint build_main_program() {
     )glsl";
     return build_program(vertex_shader_source, fragment_shader_source);
 }
+
+GLuint build_gui_program() {
+    text vertex_shader_source = R"glsl(
+        #version 330 core
+        layout (location = 0) in vec3 position;
+        layout (location = 1) in vec4 color;
+        out vec4 our_color;
+        void main() {
+            gl_Position = vec4(position, 1);
+            our_color = color;
+        }
+    )glsl";
+    text fragment_shader_source = R"glsl(
+        #version 330 core
+        in vec4 our_color;
+        out vec4 color;
+        void main() {
+            color = our_color;
+        }
+    )glsl";
+    return build_program(vertex_shader_source, fragment_shader_source);
+}
+
+GLuint build_font_program() {
+    text vertex_shader_source = R"glsl(
+        #version 330 core
+        layout (location = 0) in vec3 pos;
+        layout (location = 1) in vec2 tex;
+        out vec2 tex_coords;
+        void main() {
+            gl_Position = vec4(pos, 1);
+            tex_coords = tex;
+        }
+    )glsl";
+    text fragment_shader_source = R"glsl(
+        #version 330 core
+        in vec2 tex_coords;
+        out vec4 color;
+        uniform sampler2D char;
+        uniform vec4 char_color;
+        void main() {
+            float sampled = texture(char, tex_coords).r;
+            if (sampled > 0 && sampled <= 250 / 255.) color = char_color * vec4(0.2, 0.2, 0.2, 0.5);
+            else color = char_color * vec4(1, 1, 1, sampled);
+        }
+    )glsl";
+    return build_program(vertex_shader_source, fragment_shader_source);
+}

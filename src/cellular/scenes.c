@@ -181,8 +181,8 @@ struct Part *create_part(struct Context *ctx, struct Model *model) {
     part->used_model = model;
     part->pos = part->orientation = vector3_new(0, 0, 0);
     part->size = vector3_new(1, 1, 1);
-    part->color = vector4_new(1, 1, 0.5, 1);
-    part->edge_color = vector4_new(0.5, 0.5, 1, 1);
+    part->color = vector4_new(0.8, 0.8, 0.8, 1);
+    part->edge_color = vector4_new(0, 0, 0, 1);
     part->color_mode = 3;
     part->visible = 1;
     struct Scene *scene = part->scene = ctx->current_scene;
@@ -191,6 +191,7 @@ struct Part *create_part(struct Context *ctx, struct Model *model) {
         scene->parts = scene->last_part = part;
     else
         scene->last_part = scene->last_part->next = part;
+    scene->parts_n++;
     update_part(part);
     return part;
 }
@@ -207,8 +208,8 @@ void render_part(struct Context *ctx, struct Part *part) {
     if (!part->visible) return;
     struct Model *model = part->used_model;
     matrix4_push(part->model_mat, ctx->model_loc);
-    glUniform4fv(ctx->main_color_loc, 1, (GLfloat*) &part->color);
-    glUniform4fv(ctx->edge_color_loc, 1, (GLfloat*) &part->edge_color);
+    glUniform4fv(ctx->main_color_loc, 1, (GLfloat *) &part->color);
+    glUniform4fv(ctx->edge_color_loc, 1, (GLfloat *) &part->edge_color);
     glUniform1i(ctx->color_mode_loc, part->color_mode);
     glBindVertexArray(model->VAO);
     glDrawElements(GL_TRIANGLES, model->indices, GL_UNSIGNED_INT, 0);
@@ -235,6 +236,7 @@ void delete_part(struct Part *part) {
         if (next == NULL) scene->last_part = pred_part;
     }
     free(part);
+    scene->parts_n--;
 }
 
 //
@@ -244,6 +246,11 @@ void delete_part(struct Part *part) {
 uint create_scene(struct Context *ctx) {
     struct Scene *scene = malloc(sizeof(struct Scene));
     scene->next = NULL;
+    scene->parts = NULL;
+    scene->last_part = NULL;
+    scene->parts_n = 0;
+    scene->user_pointer = NULL;
+    scene->ctx = ctx;
     if (ctx->last_scene == NULL)
         ctx->scenes = ctx->last_scene = scene;
     else
@@ -262,17 +269,105 @@ void select_scene(struct Context *ctx, uint id) {
         n++;
         p = p->next;
     }
-    printf("Допустимое id сцены от 0 до %u. Вы же выбрал сцену под id: %u\n", n - 1, id);
+    printf("Допустимое id сцены от 0 до %u. Вы же выбрали сцену под id: %u\n", n - 1, id);
     exit(5);
 }
 
-void render_scene(struct Context *ctx) {
+void expand_menu_callback(struct Scene *scene, byte button) {
+    if (button) return;
+    struct Context *ctx = scene->ctx;
+    struct Menus *menus = &ctx->menus;
+    menus->show_menu = !menus->show_menu;
+}
+
+void open_scene0_callback(struct Scene *scene, byte button) {
+    if (button) return;
+    struct Context *ctx = scene->ctx;
+    select_scene(ctx, 0);
+}
+
+void first_menu_body(struct Context *ctx) {
+    struct Menus *menus = &ctx->menus;
+    int width = 200;
+    if (menus->show_menu) {
+        set_box_vert_gradient_color(ctx, 240, 255, 240, 220, 255, 220, 255);
+        set_line_color(ctx, 160, 255, 160, 255);
+        draw_rect_box(ctx, 0, 32, width, 240);
+        set_box_vert_gradient_color(ctx, 240, 240, 255, 220, 220, 255, 255);
+        set_line_color(ctx, 200, 200, 255, 255);
+        draw_rect_box(ctx, 10, 42, width - 20, 220);
+        set_button_color(ctx, 128, 0, 255, 0, 0, 255, 255);
+        set_text_color(ctx, 255, 128, 0, 255);
+        struct Scene *p = ctx->scenes;
+        void *open_scene_callbacks[] = {open_scene0_callback};
+        int n = 0;
+        while (p) {
+            draw_button(ctx, 10, 42 + n * 32, width - 20, 32, open_scene_callbacks[n], p->name);
+            p = p->next;
+            n++;
+        }
+    }
+    set_button_color(ctx, 0, 128, 255, 0, 0, 255, 255);
+    set_text_color(ctx, 255, 255, 0, 255);
+    draw_button(ctx, 0, 0, width, 32, expand_menu_callback, "Сцены");
+}
+
+void expand_menu2_callback(struct Scene *scene, byte button) {
+    if (button) return;
+    struct Context *ctx = scene->ctx;
+    struct Menus *menus = &ctx->menus;
+    menus->show_menu2 = !menus->show_menu2;
+}
+
+void menu2_body(struct Context *ctx) {
+    struct Menus *menus = &ctx->menus;
+    int margin = 200;
+    int width = 120;
+    if (menus->show_menu2) {
+        set_box_vert_gradient_color(ctx, 240, 255, 240, 220, 255, 220, 255);
+        set_line_color(ctx, 160, 255, 160, 255);
+        draw_rect_box(ctx, margin, 32, width, 240);
+        set_box_vert_gradient_color(ctx, 240, 240, 255, 220, 220, 255, 255);
+        set_line_color(ctx, 200, 200, 255, 255);
+        draw_rect_box(ctx, margin + 10, 42, width - 20, 220);
+
+        set_button_color(ctx, 128, 0, 255, 0, 0, 255, 255);
+        set_text_color(ctx, 255, 128, 0, 255);
+        draw_button(ctx, margin + 10, 42, (width - 20) / 3, 32, expand_menu2_callback, ";'-}");
+    }
+    set_button_color(ctx, 0, 128, 255, 0, 0, 255, 255);
+    set_text_color(ctx, 255, 255, 0, 255);
+    draw_button(ctx, margin, 0, width, 32, expand_menu2_callback, "Настройки");
+}
+
+void global_gui(struct Context *ctx) {
     struct Scene *scene = ctx->current_scene;
+    if (scene->local_gui != NULL) scene->local_gui(scene);
+    if (!ctx->lock_mouse_mode) {
+        first_menu_body(ctx);
+        menu2_body(ctx);
+    }
+    render_primitives(ctx);
+}
+
+void render_scene(struct Context *ctx) {
+    glUseProgram(ctx->shader_program);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    struct Scene *scene = ctx->current_scene;
+    if (scene->first_tick) {
+        scene->first_tick = 0;
+        if (scene->init != NULL) scene->init(scene);
+    }
+    if (scene->render != NULL) scene->render(scene);
     struct Part *p = scene->parts;
     while (p) {
         render_part(ctx, p);
         p = p->next;
     }
+    glDisable(GL_CULL_FACE);
+    global_gui(ctx);
+    glUseProgram(ctx->shader_program);
 }
 
 void free_scenes(struct Context *ctx) {
@@ -280,8 +375,24 @@ void free_scenes(struct Context *ctx) {
     struct Scene *p = ctx->scenes, *next;
     while (p) {
         next = p->next;
+        if (p->free != NULL) p->free(p);
+        if (p->user_pointer != NULL) free(p->user_pointer);
         free_parts(p);
         free(p);
         p = next;
     }
+    free_primitives(ctx);
+}
+
+uint bind_scene(struct Context *ctx, text name, void (*init)(struct Scene *scene), void (*render)(struct Scene *scene), void (*local_gui)(struct Scene *scene), void (*free)(struct Scene *scene)) {
+    uint id = create_scene(ctx);
+    select_scene(ctx, id);
+    struct Scene *scene = ctx->current_scene;
+    scene->init = init;
+    scene->render = render;
+    scene->local_gui = local_gui;
+    scene->free = free;
+    scene->first_tick = 1;
+    scene->name = name;
+    return id;
 }

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector.h>
-#include <GLFW/glfw3.h>
 
 typedef struct Matrix4 mat4;
 
