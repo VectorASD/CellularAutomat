@@ -23,11 +23,11 @@ LIB_PATH = obj/src/lib$(PROJECT)/$(LIB_NAME).a
 TEST_PATH = bin/$(PROJECT)-test/$(APP_NAME)
 
 .PHONY: all
-all: $(OBJ) $(APP_PATH)
+all: $(FreeTypeLIB_PATH) $(OBJ) $(APP_PATH)
 
 -include $(DEPS)
 
-$(APP_PATH): $(APP_OBJ) $(LIB_PATH) $(FreeTypeLIB_PATH)
+$(APP_PATH): $(APP_OBJ) $(LIB_PATH) $(FreeTypeLIB_PATH) 
 	gcc $^ -o $@ $(LFLAGS)
 
 $(LIB_PATH): $(LIB_OBJ)
@@ -65,3 +65,6 @@ endif
 .PHONY: archivate
 archivate:
 	tar -jcf $(FreeTypeARCHIVE).tar.bz $(FreeTypeARCHIVE)
+
+format:
+	git ls-files *.c | xargs clang-format -i --verbose && git diff --exit-code

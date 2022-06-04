@@ -86,6 +86,11 @@ void btn_callback_1(struct Scene *scene, byte button) {
     printf("Нажата ВТОРАЯ кнопка!!! Нажатие гарантируется только тогда, когда курсор был на ней при нажатии И отпускании %s!\n", buttons[button]);
 }
 
+void btn_callback_2(struct Scene *scene, byte button) {
+    if (button) return;
+    printf("Yeah!\n");
+}
+
 void gui_scene_0(struct Scene *scene) {
     struct Context *ctx = scene->ctx;
     struct Primitives *prim = &ctx->prim;
@@ -121,4 +126,9 @@ void gui_scene_0(struct Scene *scene) {
     draw_button(ctx, 100, 100, 100, 64, btn_callback_0);
     set_button_color(ctx, 0, 255, 0, 255, 0, 255, 255);
     draw_button(ctx, 100, 170, 100, 64, btn_callback_1);
+
+    set_button_color(ctx, 0, 128, 255, 0, 0, 255, 255);
+    draw_button(ctx, 300, 450, 100, 64, btn_callback_2);
+    set_text_color(ctx, 0, 0, 255, 255);
+    render_text(ctx, "Yeaherson", 305, 455, 54);
 }

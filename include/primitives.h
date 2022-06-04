@@ -3,8 +3,6 @@
 #include <GL/glew.h>
 #include <context.h>
 
-
-
 void init_primitives(struct Context *ctx);
 
 void draw_line(struct Context *ctx, GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2);
@@ -25,12 +23,14 @@ void free_primitives(struct Context *ctx);
 
 
 void init_fonts(struct Context *ctx);
+void render_glyphs(struct Context *ctx);
+void free_fonts(struct Context *ctx);
 
 void set_font_height(struct Context *ctx, uint height);
 void set_text_color(struct Context *ctx, float R, float G, float B, float A);
+vec4 measure_text(struct Context *ctx, text str);
+void set_text_alignment(struct Context *ctx, byte align_left, byte align_up, GLfloat width_limit, GLfloat height_limit);
 void render_text(struct Context *ctx, text str, GLfloat x, GLfloat y, GLfloat scale);
-
-void free_fonts(struct Context *ctx);
 
 
 

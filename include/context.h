@@ -1,7 +1,7 @@
 #pragma once
 
-#include <matrix.h>
 #include <ft2build.h>
+#include <matrix.h>
 #include FT_FREETYPE_H
 
 typedef unsigned char byte;
@@ -68,6 +68,8 @@ struct VertexNode {
     GLfloat x, y, z, r, g, b, a;
     short btn_id;
     void (*btn_callback)(struct Scene *scene, byte button);
+    struct Character *glyph;
+    GLfloat glyph_height;
 };
 
 struct VertexList {
@@ -92,6 +94,8 @@ struct Primitives {
     short btn_id;
     short buttons;
     void (*btn_callback)(struct Scene *scene, byte button);
+    struct Character *glyph;
+    GLfloat glyph_height;
 };
 
 struct Character {
@@ -119,6 +123,11 @@ struct Font {
     vec4 text_color;
     GLuint VBO;
     GLuint VAO;
+    byte align_left;
+    byte align_up;
+    GLfloat width_limit;
+    GLfloat height_limit;
+    struct VertexList glyphs;
 };
 
 struct Context {
@@ -167,7 +176,7 @@ int randint(int a, int b);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
-void window_size_callback(GLFWwindow* window, int width, int height);
+void window_size_callback(GLFWwindow *window, int width, int height);
 
 //          Важное замечание (ибо о нём трудно не забыть):
 // Все последующие функции изначально были релизованы в primitives.c файле.

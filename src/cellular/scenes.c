@@ -274,24 +274,24 @@ void select_scene(struct Context *ctx, uint id) {
 }
 
 void btn_callback_global_gui(struct Scene *scene, byte button) {
-    text buttons[] = {"ЛКМ", "ПКМ", "СКМ", "доп кнопку #1", "доп кнопку #2", "доп кнопку #3", "доп кнопку #4", "доп кнопку #5"};
-    printf("А это кнопка из глобального GUI. Заметьте, что пересечение кнопок не мешает нормально им функционировать! Вы нажали %s!\n", buttons[button]);
+    if (button) return;
+    printf("Yeah!");
 }
 
 void global_gui(struct Context *ctx) {
     struct Scene *scene = ctx->current_scene;
     if (scene->local_gui != NULL) scene->local_gui(scene);
 
-    set_button_color(ctx, 255, 128, 0, 255, 0, 0, 255);
-    draw_button(ctx, 170, 135, 100, 64, btn_callback_global_gui);
+    set_box_vert_gradient_color(ctx, 240, 255, 240, 220, 255, 220, 255);
+    set_line_color(ctx, 160, 255, 160, 255);
+    draw_rect_box(ctx, 0, 32, 120, 240);
 
-    set_box_vert_gradient_color(ctx, 112, 100, 152, 56, 50, 76, 220);
-    set_line_color(ctx, 64, 64, 64, 220);
-    draw_rect_box(ctx, 0, 0, 300, 300);
-
-    set_line_gradient_color(ctx, 56, 150, 160, 38, 52, 64, 200);
-    set_box_vert_gradient_color(ctx, 15, 68, 84, 16, 34, 42, 200);
+    set_box_vert_gradient_color(ctx, 240, 240, 255, 220, 220, 255, 255);
+    set_line_color(ctx, 200, 200, 255, 255);
     draw_rect_box(ctx, 50, 50, 200, 200);
+
+    set_button_color(ctx, 0, 128, 255, 0, 0, 255, 255);
+    draw_button(ctx, 0, 0, 120, 32, btn_callback_global_gui);
 
     render_primitives(ctx);
 }

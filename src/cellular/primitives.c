@@ -38,6 +38,8 @@ void init_primitives(struct Context *ctx) {
     prim->btn_id = -1;
     prim->buttons = 0;
     prim->btn_callback = NULL;
+    prim->glyph = NULL;
+    prim->glyph_height = 0;
 
     init_fonts(ctx);
 }
@@ -47,7 +49,7 @@ void add_vertex_node(struct Context *ctx, struct VertexList *list, GLfloat x, GL
     GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
     x = x * aspect / 600 * 2 - 1;
     y = 1 - y / 600 * 2;
-    struct VertexNode orig = {NULL, x, y, z, color->x, color->y, color->z, color->w, prim->btn_id, prim->btn_callback};
+    struct VertexNode orig = {NULL, x, y, z, color->x, color->y, color->z, color->w, prim->btn_id, prim->btn_callback, prim->glyph, prim->glyph_height};
     if (list->first == NULL) {
         struct VertexNode *vertex = malloc(sizeof(struct VertexNode));
         memcpy(vertex, &orig, sizeof(struct VertexNode));
@@ -58,7 +60,7 @@ void add_vertex_node(struct Context *ctx, struct VertexList *list, GLfloat x, GL
         list->last = list->last->next = vertex;
     } else {
         if (list->n) list->last = list->last->next;
-        memcpy(&list->last->x, &orig.x, 7 * sizeof(GLfloat));
+        memcpy(&list->last->x, &orig.x, sizeof(struct VertexNode) - sizeof(size_t));
     }
     list->n++;
 }
@@ -168,7 +170,6 @@ void set_box_horiz_gradient_color(struct Context *ctx, float R, float G, float B
 }
 
 void render_primitives(struct Context *ctx) {
-    glEnable(GL_DEPTH_TEST);
     glUseProgram(ctx->gui_program);
     struct Primitives *prim = &ctx->prim;
     int lines_n = prim->lines.n;
@@ -189,6 +190,9 @@ void render_primitives(struct Context *ctx) {
     glDrawArrays(GL_LINES, 0, lines_n);
 
     glBindVertexArray(0);
+
+    render_glyphs(ctx);
+
     prim->all_prims_n = 0;
     prim->buttons = 0;
 }
@@ -233,15 +237,21 @@ void init_fonts(struct Context *ctx) {
     printf("  Название: %s\n", face->family_name);
     printf("  Стиль: %s\n", face->style_name);
     set_font_height(ctx, 100);
+    set_text_alignment(ctx, 0, 0, 0, 0);
+    font->glyphs.first = NULL;
+    font->glyphs.last = NULL;
+    font->glyphs.n = font->glyphs.dropped_n = 0;
 
     glGenVertexArrays(1, &font->VAO);
     glGenBuffers(1, &font->VBO);
     glBindVertexArray(font->VAO);
     glBindBuffer(GL_ARRAY_BUFFER, font->VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 6 * 5, NULL, GL_DYNAMIC_DRAW);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid *) 0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid *) (3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 }
 
@@ -333,29 +343,11 @@ struct Character *get_glyph(struct Context *ctx, uint code) {
 
 void set_text_color(struct Context *ctx, float R, float G, float B, float A) {
     struct Font *font = &ctx->font;
-    glUseProgram(font->font_program);
-    vec4 color = font->text_color = vector4_new(R / 255, G / 255, B / 255, A / 255);
-    glUniform4fv(font->color_loc, 1, (GLfloat *) &color);
+    font->text_color = vector4_new(R / 255, G / 255, B / 255, A / 255);
 }
 
-void render_text(struct Context *ctx, text str, GLfloat x, GLfloat y, GLfloat scale) {
-    glDisable(GL_DEPTH_TEST);
-    struct Font *font = &ctx->font;
-    glUseProgram(font->font_program);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindVertexArray(font->VAO);
-
-    GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
-    scale /= font->current_height;
-    byte round = 5;
-    x -= round;
-    y -= round;
-
-    int bytes = 0, size = 0, let = 0;
-    while (str[bytes]) bytes++;
-    struct Character *glyphs[bytes];
-    GLfloat max_size = get_glyph(ctx, '(')->size.y;
+int unicoder(struct Context *ctx, text str, struct Character **glyphs) {
+    int let = 0, size = 0;
     while (str[let]) {
         uint code = (byte) str[let++];
         if (code >> 5 == 6 && (byte) str[let] >> 6 == 2)
@@ -369,32 +361,83 @@ void render_text(struct Context *ctx, text str, GLfloat x, GLfloat y, GLfloat sc
         }
         struct Character *glyph = get_glyph(ctx, code);
         glyphs[size++] = glyph;
-        if (max_size < glyph->size.y) max_size = glyph->size.y;
     }
-    y += max_size * scale;
+    return size;
+}
+
+void render_text(struct Context *ctx, text str, GLfloat x, GLfloat y, GLfloat scale) {
+    struct Font *font = &ctx->font;
+    scale /= font->current_height;
+    byte round = 5;
+    x -= round;
+    y -= round;
     GLfloat start_x = x;
-    for (let = 0; let < size; let++) {
+    y += font->current_height * scale;
+
+    int bytes = 0;
+    while (str[bytes]) bytes++;
+    struct Character *glyphs[bytes];
+    int size = unicoder(ctx, str, glyphs);
+
+    struct Primitives *prim = &ctx->prim;
+    struct VertexList *glyphs_list = &font->glyphs;
+    prim->glyph_height = scale;
+
+    for (int let = 0; let < size; let++) {
         struct Character *glyph = glyphs[let];
 
         GLfloat xpos = x + glyph->bearing.x * scale;
         GLfloat ypos = y + (glyph->size.y - glyph->bearing.y) * scale;
 
+        prim->glyph = glyph;
+        GLfloat id = prim->all_prims_n++;
+        add_vertex_node(ctx, glyphs_list, xpos, ypos, id, &font->text_color);
+
+        if (glyph->code == '\n')
+            x = start_x, y += font->current_height * scale;
+        else
+            x += (glyph->advance / 64.) * scale;
+    }
+    prim->glyph = NULL;
+    prim->glyph_height = 0;
+}
+
+void render_glyphs(struct Context *ctx) {
+    struct Font *font = &ctx->font;
+    struct VertexList *list = &font->glyphs;
+    struct VertexNode *p = list->first;
+
+    GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
+    vec4 pred_color = vector4_new(-1, -1, -1, -1);
+
+    glUseProgram(font->font_program);
+    glActiveTexture(GL_TEXTURE0);
+    glBindVertexArray(font->VAO);
+    printf("~~~~~~~~~~\n");
+    for (int i = 0; i < list->n; i++) {
+        struct Character *glyph = p->glyph;
+        GLfloat xpos = p->x, ypos = p->y, zpos = -0.999 - 0.001 * p->z / ctx->prim.all_prims_n;
+        GLfloat scale = p->glyph_height;
+        vec4 color = vector4_new(p->r, p->g, p->b, p->a);
+        if (memcmp(&pred_color, &color, sizeof(float) * 4) != 0) {
+            glUniform4fv(font->color_loc, 1, (GLfloat *) &color);
+            vector4_repr(color);
+            pred_color = color;
+        }
+
         GLfloat w = glyph->size.x * scale;
         GLfloat h = glyph->size.y * scale;
-
-        xpos = xpos * aspect / 600 * 2 - 1;
-        ypos = 1 - ypos / 600 * 2;
         w = w * aspect / 600 * 2;
         h = h / 600 * 2;
 
-        float pad = 0.03;
-        GLfloat vertices[6][4] = {
-            {xpos, ypos + h, -pad, -pad},
-            {xpos, ypos, -pad, 1 + pad},
-            {xpos + w, ypos, 1 + pad, 1 + pad},
-            {xpos, ypos + h, -pad, -pad},
-            {xpos + w, ypos, 1 + pad, 1 + pad},
-            {xpos + w, ypos + h, 1 + pad, -pad}};
+        GLfloat vertices[6][5] = {
+            {xpos, ypos + h, zpos, 0, 0},
+            {xpos, ypos, zpos, 0, 1},
+            {xpos + w, ypos, zpos, 1, 1},
+            {xpos, ypos + h, zpos, 0, 0},
+            {xpos + w, ypos, zpos, 1, 1},
+            {xpos + w, ypos + h, zpos, 1, 0}};
+
         glBindTexture(GL_TEXTURE_2D, glyph->texture_id);
 
         glBindBuffer(GL_ARRAY_BUFFER, font->VBO);
@@ -403,13 +446,38 @@ void render_text(struct Context *ctx, text str, GLfloat x, GLfloat y, GLfloat sc
 
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        if (glyph->code == '\n')
-            x = start_x, y += max_size * scale;
-        else
-            x += (glyph->advance >> 6) * scale;
+        p = p->next;
     }
+    list->last = list->first;
+    list->dropped_n = list->n;
+    list->n = 0;
+
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+vec4 measure_text(struct Context *ctx, text str) {
+    int bytes = 0;
+    while (str[bytes]) bytes++;
+    struct Character *glyphs[bytes];
+    int size = unicoder(ctx, str, glyphs);
+    GLfloat max_up = 0, max_down = 0, right = size ? glyphs[0]->bearing.x : 0, width = -right;
+    for (int let = 0; let < size; let++) {
+        struct Character *glyph = glyphs[let];
+        if (glyph->bearing.y > max_up || !let) max_up = glyph->bearing.y;
+        GLfloat down = glyph->size.y - glyph->bearing.y;
+        if (down > max_down || !let) max_down = down;
+        width += let == size - 1 ? glyph->bearing.x + glyph->size.x : glyph->advance / 64.;
+    }
+    return vector4_new(right, max_up, width, max_up + max_down);
+}
+
+void set_text_alignment(struct Context *ctx, byte align_left, byte align_up, GLfloat width_limit, GLfloat height_limit) {
+    struct Font *font = &ctx->font;
+    font->align_left = align_left;
+    font->align_up = align_up;
+    font->width_limit = width_limit;
+    font->height_limit = height_limit;
 }
 
 void free_map(struct CharNode *node, int level) {
@@ -427,6 +495,12 @@ void free_fonts(struct Context *ctx) {
     free_map(font->map, 0);
     glDeleteBuffers(1, &font->VBO);
     glDeleteVertexArrays(1, &font->VAO);
+    struct VertexNode *p = font->glyphs.first, *next;
+    while (p) {
+        next = p->next;
+        free(p);
+        p = next;
+    }
 }
 
 //

@@ -107,11 +107,12 @@ GLuint build_gui_program() {
 GLuint build_font_program() {
     text vertex_shader_source = R"glsl(
         #version 330 core
-        layout (location = 0) in vec4 vertex;
+        layout (location = 0) in vec3 pos;
+        layout (location = 1) in vec2 tex;
         out vec2 tex_coords;
         void main() {
-            gl_Position = vec4(vertex.xy, -1, 1);
-            tex_coords = vertex.zw;
+            gl_Position = vec4(pos, 1);
+            tex_coords = tex;
         }
     )glsl";
     text fragment_shader_source = R"glsl(

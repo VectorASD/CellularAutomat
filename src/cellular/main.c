@@ -58,6 +58,7 @@ GLFWwindow *glfw_glew_init(struct Context *ctx) {
 
     glPointSize(5);
     glLineWidth(3);
+    glEnable(GL_DEPTH_TEST);
     glCullFace(GL_FRONT);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
