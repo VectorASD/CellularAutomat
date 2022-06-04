@@ -61,6 +61,7 @@ struct Scene {
     void (*local_gui)(struct Scene *scene);
     void (*free)(struct Scene *scene);
     byte first_tick;
+    text name;
 };
 
 struct VertexNode {
@@ -129,6 +130,11 @@ struct Font {
     struct VertexList glyphs;
 };
 
+struct Menus {
+    byte show_menu;
+    byte show_menu2;
+};
+
 struct Context {
     struct Settings settings;
     struct Camera camera;
@@ -161,6 +167,7 @@ struct Context {
     short btn_id_release[8];
     short btn_mouse_pressed[8];
     short mouse_pressed;
+    struct Menus menus;
 };
 
 void load_context(struct Context *ctx);

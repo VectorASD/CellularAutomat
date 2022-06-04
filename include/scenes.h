@@ -20,4 +20,4 @@ void delete_part(struct Part *part);
 void select_scene(struct Context *ctx, uint id);
 void render_scene(struct Context *ctx);
 void free_scenes(struct Context *ctx);
-uint bind_scene(struct Context *ctx, void (*init)(struct Scene *scene), void (*render)(struct Scene *scene), void (*local_gui)(struct Scene *scene), void (*free)(struct Scene *scene));
+uint bind_scene(struct Context *ctx, text name, void (*init)(struct Scene *scene), void (*render)(struct Scene *scene), void (*local_gui)(struct Scene *scene), void (*free)(struct Scene *scene));

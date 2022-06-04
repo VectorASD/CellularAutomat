@@ -273,26 +273,80 @@ void select_scene(struct Context *ctx, uint id) {
     exit(5);
 }
 
-void btn_callback_global_gui(struct Scene *scene, byte button) {
+void expand_menu_callback(struct Scene *scene, byte button) {
     if (button) return;
-    printf("Yeah!\n");
+    struct Context *ctx = scene->ctx;
+    struct Menus *menus = &ctx->menus;
+    menus->show_menu = !menus->show_menu;
+}
+
+void open_scene0_callback(struct Scene *scene, byte button) {
+    if (button) return;
+    struct Context *ctx = scene->ctx;
+    select_scene(ctx, 0);
+}
+
+void first_menu_body(struct Context *ctx) {
+    struct Menus *menus = &ctx->menus;
+    int width = 200;
+    if (menus->show_menu) {
+        set_box_vert_gradient_color(ctx, 240, 255, 240, 220, 255, 220, 255);
+        set_line_color(ctx, 160, 255, 160, 255);
+        draw_rect_box(ctx, 0, 32, width, 240);
+        set_box_vert_gradient_color(ctx, 240, 240, 255, 220, 220, 255, 255);
+        set_line_color(ctx, 200, 200, 255, 255);
+        draw_rect_box(ctx, 10, 42, width - 20, 220);
+        set_button_color(ctx, 128, 0, 255, 0, 0, 255, 255);
+        set_text_color(ctx, 255, 128, 0, 255);
+        struct Scene *p = ctx->scenes;
+        void *open_scene_callbacks[] = {open_scene0_callback};
+        int n = 0;
+        while (p) {
+            draw_button(ctx, 10, 42 + n * 32, width - 20, 32, open_scene_callbacks[n], p->name);
+            p = p->next;
+            n++;
+        }
+    }
+    set_button_color(ctx, 0, 128, 255, 0, 0, 255, 255);
+    set_text_color(ctx, 255, 255, 0, 255);
+    draw_button(ctx, 0, 0, width, 32, expand_menu_callback, "Сцены");
+}
+
+void expand_menu2_callback(struct Scene *scene, byte button) {
+    if (button) return;
+    struct Context *ctx = scene->ctx;
+    struct Menus *menus = &ctx->menus;
+    menus->show_menu2 = !menus->show_menu2;
+}
+
+void menu2_body(struct Context *ctx) {
+    struct Menus *menus = &ctx->menus;
+    int margin = 200;
+    int width = 120;
+    if (menus->show_menu2) {
+        set_box_vert_gradient_color(ctx, 240, 255, 240, 220, 255, 220, 255);
+        set_line_color(ctx, 160, 255, 160, 255);
+        draw_rect_box(ctx, margin, 32, width, 240);
+        set_box_vert_gradient_color(ctx, 240, 240, 255, 220, 220, 255, 255);
+        set_line_color(ctx, 200, 200, 255, 255);
+        draw_rect_box(ctx, margin + 10, 42, width - 20, 220);
+
+        set_button_color(ctx, 128, 0, 255, 0, 0, 255, 255);
+        set_text_color(ctx, 255, 128, 0, 255);
+        draw_button(ctx, margin + 10, 42, (width - 20) / 3, 32, expand_menu2_callback, ";'-}");
+    }
+    set_button_color(ctx, 0, 128, 255, 0, 0, 255, 255);
+    set_text_color(ctx, 255, 255, 0, 255);
+    draw_button(ctx, margin, 0, width, 32, expand_menu2_callback, "Настройки");
 }
 
 void global_gui(struct Context *ctx) {
     struct Scene *scene = ctx->current_scene;
     if (scene->local_gui != NULL) scene->local_gui(scene);
-
-    set_box_vert_gradient_color(ctx, 240, 255, 240, 220, 255, 220, 255);
-    set_line_color(ctx, 160, 255, 160, 255);
-    draw_rect_box(ctx, 0, 32, 120, 240);
-
-    //set_box_vert_gradient_color(ctx, 240, 240, 255, 220, 220, 255, 255);
-    //set_line_color(ctx, 200, 200, 255, 255);
-    //draw_rect_box(ctx, 50, 50, 200, 200);
-
-    set_button_color(ctx, 0, 128, 255, 0, 0, 255, 255);
-    draw_button(ctx, 0, 0, 120, 32, btn_callback_global_gui, "scenes");
-
+    if (!ctx->lock_mouse_mode) {
+        first_menu_body(ctx);
+        menu2_body(ctx);
+    }
     render_primitives(ctx);
 }
 
@@ -330,7 +384,7 @@ void free_scenes(struct Context *ctx) {
     free_primitives(ctx);
 }
 
-uint bind_scene(struct Context *ctx, void (*init)(struct Scene *scene), void (*render)(struct Scene *scene), void (*local_gui)(struct Scene *scene), void (*free)(struct Scene *scene)) {
+uint bind_scene(struct Context *ctx, text name, void (*init)(struct Scene *scene), void (*render)(struct Scene *scene), void (*local_gui)(struct Scene *scene), void (*free)(struct Scene *scene)) {
     uint id = create_scene(ctx);
     select_scene(ctx, id);
     struct Scene *scene = ctx->current_scene;
@@ -339,5 +393,6 @@ uint bind_scene(struct Context *ctx, void (*init)(struct Scene *scene), void (*r
     scene->local_gui = local_gui;
     scene->free = free;
     scene->first_tick = 1;
+    scene->name = name;
     return id;
 }

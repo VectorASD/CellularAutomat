@@ -473,7 +473,7 @@ vec4 measure_text(struct Character **glyphs, int size) {
         if (down > max_down || !let) max_down = down;
         width += let == size - 1 ? glyph->bearing.x + glyph->size.x : glyph->advance / 64.;
     }
-    return vector4_new(right, max_up, width, max_up + max_down);
+    return vector4_new(right, max_up, width, max_up + max_down / 2);
 }
 
 void set_text_alignment(struct Context *ctx, byte align_left, byte align_up, GLfloat width_limit) {

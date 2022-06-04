@@ -37,6 +37,9 @@ void load_context(struct Context *ctx) {
         ctx->btn_mouse_pressed[key] = 0;
     }
     ctx->mouse_pressed = 0;
+    struct Menus *menus = &ctx->menus;
+    menus->show_menu = 0;
+    menus->show_menu2 = 0;
 }
 
 void upd_projection_mat(struct Context *ctx) {

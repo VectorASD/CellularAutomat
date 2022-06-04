@@ -4,10 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//apt-get install libglew-dev libglfw3-dev
-//Главное в будущем не забыть перенести куда-нибудь в Readme это перед отправкой на проверку
-//LFLAGS = ... -lX11 -lpthread -lXrandr -ldl Возможно в будущем что-то из этого понадобиться...
-
 GLFWwindow *glfw_glew_init(struct Context *ctx) {
     if (!glfwInit()) {
         printf("Инициализация GLFW провалена\n");
@@ -71,7 +67,7 @@ int main(int argc, char *argv[]) {
     init_models(&ctx);
     init_primitives(&ctx);
 
-    uint scene_0 = bind_scene(&ctx, init_scene_0, render_scene_0, gui_scene_0, NULL);
+    uint scene_0 = bind_scene(&ctx, "Самая первая", init_scene_0, render_scene_0, gui_scene_0, NULL);
 
     select_scene(&ctx, scene_0);
 
