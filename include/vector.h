@@ -1,6 +1,16 @@
 #pragma once
 
-typedef struct Vector3 vec2;
+#define GLEW_STATIC
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
+typedef unsigned char byte;
+typedef unsigned short ushort;
+typedef unsigned int uint;
+typedef unsigned long int ulong;
+typedef const char *text;
+
+typedef struct Vector2 vec2;
 typedef struct Vector3 vec3;
 typedef struct Vector4 vec4;
 
@@ -19,6 +29,7 @@ struct Vector4 {
 
 
 vec2 vector2_new(float x, float y);
+byte vector2_cmp(vec2 a, vec2 b);
 
 vec2 vector2_add(vec2 a, vec2 b);
 vec2 vector2_add_s(vec2 a, float scale);
@@ -41,6 +52,7 @@ float vector2_dot(vec2 a, vec2 b);
 
 
 vec3 vector3_new(float x, float y, float z);
+byte vector3_cmp(vec3 a, vec3 b);
 
 vec3 vector3_add(vec3 a, vec3 b);
 vec3 vector3_add_s(vec3 a, float scale);
@@ -64,6 +76,7 @@ float vector3_dot(vec3 a, vec3 b);
 
 
 vec4 vector4_new(float x, float y, float z, float w);
+byte vector4_cmp(vec4 a, vec4 b);
 
 vec4 vector4_add(vec4 a, vec4 b);
 vec4 vector4_add_s(vec4 a, float scale);

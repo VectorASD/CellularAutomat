@@ -126,7 +126,6 @@ struct Font {
     byte align_left;
     byte align_up;
     GLfloat width_limit;
-    GLfloat height_limit;
     struct VertexList glyphs;
 };
 
@@ -178,15 +177,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
 void window_size_callback(GLFWwindow *window, int width, int height);
 
-//          Важное замечание (ибо о нём трудно не забыть):
-// Все последующие функции изначально были релизованы в primitives.c файле.
-// Но, т.к. calculate_hovered_button нужен здесь, а primitives.c не может
-// не юзать context.h, то пришлось произвести данный перенос.
-// Можно, конечно, было схитрить и только объявить calculate_hovered_button
-// в context.h, но тогда были бы проблемы во время тестирования XD
-// СИЛЬНО спасает то, что все структуры из контекста изначально объявлены в нём же!
-// А ведь до этого случая я действительно планировал перенести некоторые
-// структуры в вышестоящие над context.h скрипты, что, оказывается, не возможно! XD
+
 
 float min(float a, float b);
 float max(float a, float b);

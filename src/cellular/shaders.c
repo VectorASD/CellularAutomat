@@ -123,7 +123,7 @@ GLuint build_font_program() {
         uniform vec4 char_color;
         void main() {
             float sampled = texture(char, tex_coords).r;
-            if (sampled > 0 && sampled <= 250 / 255.) color = vec4(0, 0, 0, 1);
+            if (sampled > 0 && sampled <= 250 / 255.) color = char_color * vec4(0.2, 0.2, 0.2, 0.5);
             else color = char_color * vec4(1, 1, 1, sampled);
         }
     )glsl";

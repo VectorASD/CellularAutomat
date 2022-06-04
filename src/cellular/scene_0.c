@@ -94,8 +94,11 @@ void btn_callback_2(struct Scene *scene, byte button) {
 void gui_scene_0(struct Scene *scene) {
     struct Context *ctx = scene->ctx;
     struct Primitives *prim = &ctx->prim;
+
     float color = radians(ctx->time * 16);
     set_text_color(ctx, 191 + sin(color * 4) * 64, 191 + sin(color * 5) * 64, 191 + sin(color * 7) * 64, 255);
+    set_text_alignment(ctx, 0, 0, 0);
+
     prim->line_color = vector4_new(1, 1, 0, 1);
     prim->line_color2 = vector4_new(0, 0, 1, 0.5);
     prim->tri_color = vector4_new(0, 1, 0, 1);
@@ -123,12 +126,11 @@ void gui_scene_0(struct Scene *scene) {
         render_text(ctx, ctx->fps_view[(ctx->fps_view_n + i) % 6], 5, 600 - 7 - 15 * (6 - i), 15);
 
     set_button_color(ctx, 255, 255, 0, 0, 0, 255, 255);
-    draw_button(ctx, 100, 100, 100, 64, btn_callback_0);
+    draw_button(ctx, 100, 100, 100, 64, btn_callback_0, "A");
     set_button_color(ctx, 0, 255, 0, 255, 0, 255, 255);
-    draw_button(ctx, 100, 170, 100, 64, btn_callback_1);
+    draw_button(ctx, 100, 170, 100, 64, btn_callback_1, "B");
 
     set_button_color(ctx, 0, 128, 255, 0, 0, 255, 255);
-    draw_button(ctx, 300, 450, 100, 64, btn_callback_2);
-    set_text_color(ctx, 0, 0, 255, 255);
-    render_text(ctx, "Yeaherson", 305, 455, 54);
+    set_text_color(ctx, 0, 255, 0, 255);
+    draw_button(ctx, 300, 450, 100, 64, btn_callback_2, "Yeaherson");
 }

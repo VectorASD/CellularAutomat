@@ -1,6 +1,3 @@
-#define GLEW_STATIC
-#include <GL/glew.h>
-#include <context.h>
 #include <scene_0.h>
 #include <scenes.h>
 #include <shaders.h>

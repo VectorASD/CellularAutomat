@@ -237,7 +237,7 @@ void init_fonts(struct Context *ctx) {
     printf("  Название: %s\n", face->family_name);
     printf("  Стиль: %s\n", face->style_name);
     set_font_height(ctx, 100);
-    set_text_alignment(ctx, 0, 0, 0, 0);
+    set_text_alignment(ctx, 0, 0, 0);
     font->glyphs.first = NULL;
     font->glyphs.last = NULL;
     font->glyphs.n = font->glyphs.dropped_n = 0;
@@ -367,17 +367,27 @@ int unicoder(struct Context *ctx, text str, struct Character **glyphs) {
 
 void render_text(struct Context *ctx, text str, GLfloat x, GLfloat y, GLfloat scale) {
     struct Font *font = &ctx->font;
-    scale /= font->current_height;
-    byte round = 5;
-    x -= round;
-    y -= round;
-    GLfloat start_x = x;
-    y += font->current_height * scale;
-
     int bytes = 0;
     while (str[bytes]) bytes++;
     struct Character *glyphs[bytes];
     int size = unicoder(ctx, str, glyphs);
+    vec4 measure = measure_text(glyphs, size);
+
+    scale /= font->current_height;
+    if (font->width_limit >= 5) {
+        GLfloat bust = measure.z * scale / font->width_limit;
+        if (bust > 1) scale /= bust;
+    }
+
+    x /= scale;
+    y /= scale;
+    byte round = 5;
+    x -= round;
+    y -= round;
+    GLfloat start_x = x;
+
+    x -= measure.x + measure.z / 2 * font->align_left;
+    y -= measure.w / 2 * font->align_up - measure.y;
 
     struct Primitives *prim = &ctx->prim;
     struct VertexList *glyphs_list = &font->glyphs;
@@ -386,17 +396,17 @@ void render_text(struct Context *ctx, text str, GLfloat x, GLfloat y, GLfloat sc
     for (int let = 0; let < size; let++) {
         struct Character *glyph = glyphs[let];
 
-        GLfloat xpos = x + glyph->bearing.x * scale;
-        GLfloat ypos = y + (glyph->size.y - glyph->bearing.y) * scale;
+        GLfloat xpos = (x + glyph->bearing.x) * scale;
+        GLfloat ypos = (y + glyph->size.y - glyph->bearing.y) * scale;
 
         prim->glyph = glyph;
         GLfloat id = prim->all_prims_n++;
         add_vertex_node(ctx, glyphs_list, xpos, ypos, id, &font->text_color);
 
         if (glyph->code == '\n')
-            x = start_x, y += font->current_height * scale;
+            x = start_x, y += font->current_height;
         else
-            x += (glyph->advance / 64.) * scale;
+            x += glyph->advance / 64.;
     }
     prim->glyph = NULL;
     prim->glyph_height = 0;
@@ -413,15 +423,13 @@ void render_glyphs(struct Context *ctx) {
     glUseProgram(font->font_program);
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(font->VAO);
-    printf("~~~~~~~~~~\n");
     for (int i = 0; i < list->n; i++) {
         struct Character *glyph = p->glyph;
         GLfloat xpos = p->x, ypos = p->y, zpos = -0.999 - 0.001 * p->z / ctx->prim.all_prims_n;
         GLfloat scale = p->glyph_height;
         vec4 color = vector4_new(p->r, p->g, p->b, p->a);
-        if (memcmp(&pred_color, &color, sizeof(float) * 4) != 0) {
+        if (!vector4_cmp(pred_color, color)) {
             glUniform4fv(font->color_loc, 1, (GLfloat *) &color);
-            vector4_repr(color);
             pred_color = color;
         }
 
@@ -456,11 +464,7 @@ void render_glyphs(struct Context *ctx) {
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-vec4 measure_text(struct Context *ctx, text str) {
-    int bytes = 0;
-    while (str[bytes]) bytes++;
-    struct Character *glyphs[bytes];
-    int size = unicoder(ctx, str, glyphs);
+vec4 measure_text(struct Character **glyphs, int size) {
     GLfloat max_up = 0, max_down = 0, right = size ? glyphs[0]->bearing.x : 0, width = -right;
     for (int let = 0; let < size; let++) {
         struct Character *glyph = glyphs[let];
@@ -472,12 +476,11 @@ vec4 measure_text(struct Context *ctx, text str) {
     return vector4_new(right, max_up, width, max_up + max_down);
 }
 
-void set_text_alignment(struct Context *ctx, byte align_left, byte align_up, GLfloat width_limit, GLfloat height_limit) {
+void set_text_alignment(struct Context *ctx, byte align_left, byte align_up, GLfloat width_limit) {
     struct Font *font = &ctx->font;
     font->align_left = align_left;
     font->align_up = align_up;
     font->width_limit = width_limit;
-    font->height_limit = height_limit;
 }
 
 void free_map(struct CharNode *node, int level) {
@@ -528,11 +531,11 @@ void draw_btn_rect(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLf
     add_vertex_node(ctx, lines, x2 + 1, y2, id, &prim->line_color2);
 }
 
-void draw_button(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat height, void (*btn_callback)(struct Scene *scene, byte button)) {
+void draw_button(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat height, void (*btn_callback)(struct Scene *scene, byte button), text str) {
     struct Primitives *prim = &ctx->prim;
     prim->btn_id = prim->buttons++;
     prim->btn_callback = btn_callback;
-    GLfloat h2 = height / 2;
+    GLfloat w2 = width / 2, h2 = height / 2;
     vec4 color = prim->tri_color, color2 = prim->tri_color2, color3 = prim->tri_color3, color4 = prim->tri_color4;
     prim->tri_color3 = color;
     prim->tri_color4 = color2;
@@ -545,6 +548,13 @@ void draw_button(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLflo
     draw_btn_rect(ctx, x, y, width, height);
     prim->btn_id = -1;
     prim->btn_callback = NULL;
+
+    struct Font *font = &ctx->font;
+    byte tmp = font->align_left, tmp2 = font->align_up;
+    GLfloat tmp3 = font->width_limit;
+    set_text_alignment(ctx, 1, 1, width);
+    render_text(ctx, str, x + w2, y + h2, height);
+    set_text_alignment(ctx, tmp, tmp2, tmp3);
 }
 
 void set_button_color(struct Context *ctx, float box_R, float box_G, float box_B, float line_R, float line_G, float line_B, float A) {

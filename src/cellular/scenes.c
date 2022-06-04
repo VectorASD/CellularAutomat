@@ -275,7 +275,7 @@ void select_scene(struct Context *ctx, uint id) {
 
 void btn_callback_global_gui(struct Scene *scene, byte button) {
     if (button) return;
-    printf("Yeah!");
+    printf("Yeah!\n");
 }
 
 void global_gui(struct Context *ctx) {
@@ -286,12 +286,12 @@ void global_gui(struct Context *ctx) {
     set_line_color(ctx, 160, 255, 160, 255);
     draw_rect_box(ctx, 0, 32, 120, 240);
 
-    set_box_vert_gradient_color(ctx, 240, 240, 255, 220, 220, 255, 255);
-    set_line_color(ctx, 200, 200, 255, 255);
-    draw_rect_box(ctx, 50, 50, 200, 200);
+    //set_box_vert_gradient_color(ctx, 240, 240, 255, 220, 220, 255, 255);
+    //set_line_color(ctx, 200, 200, 255, 255);
+    //draw_rect_box(ctx, 50, 50, 200, 200);
 
     set_button_color(ctx, 0, 128, 255, 0, 0, 255, 255);
-    draw_button(ctx, 0, 0, 120, 32, btn_callback_global_gui);
+    draw_button(ctx, 0, 0, 120, 32, btn_callback_global_gui, "scenes");
 
     render_primitives(ctx);
 }
