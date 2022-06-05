@@ -73,12 +73,13 @@ endif
 	@echo XD
 
 $(GLFW_PATH):
-ifeq ($(wildcard $(GLFW_ARCHIVE)),)
-	tar -jxf $(GLFW_ARCHIVE).tar.bz
-endif
-ifeq ($(wildcard $(GLFW_ARCHIVE)/Makefile),)
-	cd $(GLFW_ARCHIVE) && cmake CMakeLists.txt
-endif
+	sudo apt-get install libglfw3-dev
+#ifeq ($(wildcard $(GLFW_ARCHIVE)),)
+#	tar -jxf $(GLFW_ARCHIVE).tar.bz
+#endif
+#ifeq ($(wildcard $(GLFW_ARCHIVE)/Makefile),)
+#	cd $(GLFW_ARCHIVE) && cmake CMakeLists.txt
+#endif
 	@echo XD
 
 .PHONY: archivate
