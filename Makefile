@@ -4,6 +4,10 @@ PROJECT = cellular
 
 FreeTypeARCHIVE = freetype-2.12.1
 FreeTypeLIB_PATH = $(FreeTypeARCHIVE)/objs/libfreetype.a
+GLEW_ARCHIVE = glew-1.9.0
+GLEW_PATH = $(GLEW_ARCHIVE)
+GLFW_ARCHIVE = glfw-3.3.7
+GLFW_PATH = $(GLFW_ARCHIVE)/lol
 
 CFLAGS = -Wall -Werror -I include -MMD -I $(FreeTypeARCHIVE)/include
 LFLAGS = -lglfw -lGL -lGLEW -lm
@@ -23,7 +27,7 @@ LIB_PATH = obj/src/lib$(PROJECT)/$(LIB_NAME).a
 TEST_PATH = bin/$(PROJECT)-test/$(APP_NAME)
 
 .PHONY: all
-all: $(FreeTypeLIB_PATH) $(OBJ) $(APP_PATH)
+all: $(FreeTypeLIB_PATH) $(GLFW_PATH) $(OBJ) $(APP_PATH)
 
 -include $(DEPS)
 
@@ -62,9 +66,32 @@ ifeq ($(wildcard $(FreeTypeARCHIVE)),)
 endif
 	cd $(FreeTypeARCHIVE) && make
 
+$(GLEW_PATH):
+ifeq ($(wildcard $(GLEW_ARCHIVE)),)
+	tar -jxf $(GLEW_ARCHIVE).tar.bz
+endif
+	@echo XD
+
+$(GLFW_PATH):
+ifeq ($(wildcard $(GLFW_ARCHIVE)),)
+	tar -jxf $(GLFW_ARCHIVE).tar.bz
+endif
+ifeq ($(wildcard $(GLFW_ARCHIVE)/Makefile),)
+	cd $(GLFW_ARCHIVE) && cmake CMakeLists.txt
+endif
+	@echo XD
+
 .PHONY: archivate
 archivate:
 	tar -jcf $(FreeTypeARCHIVE).tar.bz $(FreeTypeARCHIVE)
+
+.PHONY: archivate2
+archivate2:
+	tar -jcf $(GLEW_ARCHIVE).tar.bz $(GLEW_ARCHIVE)
+
+.PHONY: archivate3
+archivate3:
+	tar -jcf $(GLFW_ARCHIVE).tar.bz $(GLFW_ARCHIVE)
 
 format:
 	git ls-files *.c | xargs clang-format -i --verbose && git diff --exit-code

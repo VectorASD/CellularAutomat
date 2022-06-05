@@ -9,4 +9,6 @@ main
 *~
 
 # Results of unzipping
-freetype-2.12.1
+freetype-*/
+glfw-*/
+glew-*/
