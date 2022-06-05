@@ -4,10 +4,6 @@ PROJECT = cellular
 
 FreeTypeARCHIVE = freetype-2.12.1
 FreeTypeLIB_PATH = $(FreeTypeARCHIVE)/objs/libfreetype.a
-GLEW_ARCHIVE = glew-1.9.0
-GLEW_PATH = $(GLEW_ARCHIVE)
-GLFW_ARCHIVE = glfw-3.3.7
-GLFW_PATH = $(GLFW_ARCHIVE)/lol
 
 CFLAGS = -Wall -Werror -I include -MMD -I $(FreeTypeARCHIVE)/include
 LFLAGS = -lglfw -lGL -lGLEW -lm
@@ -72,27 +68,18 @@ ifeq ($(wildcard $(GLEW_ARCHIVE)),)
 endif
 	@echo XD
 
-$(GLFW_PATH):
-	sudo apt-get install libglfw3-dev
-#ifeq ($(wildcard $(GLFW_ARCHIVE)),)
-#	tar -jxf $(GLFW_ARCHIVE).tar.bz
-#endif
-#ifeq ($(wildcard $(GLFW_ARCHIVE)/Makefile),)
-#	cd $(GLFW_ARCHIVE) && cmake CMakeLists.txt
-#endif
-	@echo XD
+.PHONY: install
+install:
+	sudo apt-get install libglfw3-dev libglew-dev
+
+.PHONY: install2
+install2:
+	sudo apt-get install cmake xorg-dev libglu1-mesa-dev
+	cmake -G "Unix Makefiles"
 
 .PHONY: archivate
 archivate:
 	tar -jcf $(FreeTypeARCHIVE).tar.bz $(FreeTypeARCHIVE)
-
-.PHONY: archivate2
-archivate2:
-	tar -jcf $(GLEW_ARCHIVE).tar.bz $(GLEW_ARCHIVE)
-
-.PHONY: archivate3
-archivate3:
-	tar -jcf $(GLFW_ARCHIVE).tar.bz $(GLFW_ARCHIVE)
 
 format:
 	git ls-files *.c | xargs clang-format -i --verbose && git diff --exit-code
