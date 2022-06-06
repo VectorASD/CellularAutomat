@@ -169,6 +169,16 @@ void init_models(struct Context *ctx) {
         indices[i_pos++] = ver_c + yaw_deg % quality2 + 1;
     }
     add_model(ctx, create_model("сфера", 6 * vertexes_n, 3 * indices_n, vertexes, indices));
+
+    GLfloat panel_vertexes[] = {
+        -1, -1, 0, 1, 0, 0,
+        1, -1, 0, 0, 1, 0,
+        -1, 1, 0, 0, 0, 1,
+        1, 1, 0, 1, 1, 0};
+    GLuint panel_indices[] = {
+        0, 1, 2, 0, 2, 1,
+        1, 2, 3, 1, 3, 2};
+    add_model(ctx, create_model("панель", 6 * 4, 3 * 4, panel_vertexes, panel_indices));
 }
 
 //
@@ -363,7 +373,8 @@ void global_gui(struct Context *ctx) {
     if (scene == ctx->scenes) {
         for (int i = 0; i < 6; i++)
             render_text(ctx, ctx->fps_view[(ctx->fps_view_n + i) % 6], 5, 600 - 15 * (5 - i), 15);
-    } else render_text(ctx, ctx->fps_view[(ctx->fps_view_n + 5) % 6], 5, 600, 15);
+    } else
+        render_text(ctx, ctx->fps_view[(ctx->fps_view_n + 5) % 6], 5, 600, 15);
     render_primitives(ctx);
 }
 

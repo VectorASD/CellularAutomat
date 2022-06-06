@@ -76,7 +76,6 @@ GLuint build_main_program() {
             float depth;
             int yeah;
         };
-        
         void main() {
             if (color_mode == 1 || color_mode == 3) color = main_color;
             else color = vec4(our_color, 1);
@@ -88,7 +87,7 @@ GLuint build_main_program() {
                 if (edge) color = edge_color;
 	    }
             float cursor_dist = length(gl_FragCoord.xy - vec2(cursor_pos[0], cursor_pos[1]));
-            if (cursor_dist < 10) color = vec4(1, 1, 1, 1); // У курсора есть теперь кружок
+            if (cursor_dist < 4) color = vec4(1, 1, 1, 1); // У курсора есть теперь кружок
             if (cursor_dist < 1 && gl_FragCoord.z <= depth) {
                 founded_id = part_id;
                 depth = gl_FragCoord.z;
