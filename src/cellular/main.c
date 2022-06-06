@@ -3,6 +3,7 @@
 #include <shaders.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <scene_ant_2d.h>
 
 GLFWwindow *glfw_glew_init(struct Context *ctx) {
     if (!glfwInit()) {
@@ -69,9 +70,10 @@ int main(int argc, char *argv[]) {
     init_models(&ctx);
     init_primitives(&ctx);
 
-    uint scene_0 = bind_scene(&ctx, "Самая первая", init_scene_0, render_scene_0, gui_scene_0, NULL);
+    bind_scene(&ctx, "Самая первая", init_scene_0, render_scene_0, gui_scene_0, NULL);
+    uint start_scene = bind_scene(&ctx, "Муравей Лэнктона 2D", init_scene_ant_2d, render_scene_ant_2d, gui_scene_ant_2d, NULL);
 
-    select_scene(&ctx, scene_0);
+    select_scene(&ctx, start_scene);
 
     GLuint shader_program = build_main_program();
     ctx.projection_loc = glGetUniformLocation(shader_program, "projection");

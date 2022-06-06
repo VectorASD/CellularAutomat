@@ -131,8 +131,6 @@ void gui_scene_0(struct Scene *scene) {
     }
     draw_box(ctx, 680, 220, 100, 100);
     render_text(ctx, "1234567890.,АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ\nабвгдеёжзийклмнопрстуфхцчшщъыьэюя!()-+_=:;|~/\\", 5, 5, 24);
-    for (int i = 0; i < 6; i++)
-        render_text(ctx, ctx->fps_view[(ctx->fps_view_n + i) % 6], 5, 600 - 7 - 15 * (6 - i), 15);
 
     set_button_color(ctx, 255, 255, 0, 0, 0, 255, 255);
     draw_button(ctx, 100, 100, 100, 64, btn_callback_0, "A");
