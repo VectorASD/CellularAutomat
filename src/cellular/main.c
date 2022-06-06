@@ -47,7 +47,9 @@ GLFWwindow *glfw_glew_init(struct Context *ctx) {
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
-    ctx->window_size = vector2_new(width, height);
+    ctx->window_size = vector4_new(width, height, (float) width / height, (float) height / width);
+    ctx->window_center[0] = width / 2;
+    ctx->window_center[1] = height / 2;
 
     glPointSize(5);
     glLineWidth(3);

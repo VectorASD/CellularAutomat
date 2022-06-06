@@ -51,7 +51,7 @@ void load_context(struct Context *ctx) {
 }
 
 void upd_projection_mat(struct Context *ctx) {
-    mat4 projection = perspective(radians(90), (float) ctx->window_size.x / ctx->window_size.y, 0.1, 100);
+    mat4 projection = perspective(radians(90), ctx->window_size.z, 0.1, 100);
     matrix4_push(projection, ctx->projection_loc);
 }
 
@@ -105,8 +105,7 @@ void context_tick(struct Context *ctx) {
     update_SSBO(ctx);
     if (ctx->lock_mouse && ctx->btn_mouse_clicked[0]) {
         ctx->mouse_lock_mode = 1;
-        GLint empty_cursor[2] = {ctx->window_size.x / 2, ctx->window_size.y / 2};
-        glUniform1iv(ctx->cursor_pos_loc, 2, empty_cursor);
+        glUniform1iv(ctx->cursor_pos_loc, 2, ctx->window_center);
         glfwSetInputMode(ctx->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
     for (int key = 0; key < 8; key++)
@@ -143,7 +142,7 @@ float dot_to_line_dist(float x, float y, float x2, float y2, float dot_x, float 
 }
 
 short calculate_hovered_button(struct Context *ctx, byte use_dropped_n) {
-    float aspect = ctx->window_size.y / ctx->window_size.x;
+    float aspect = ctx->window_size.w;
     vec2 *pos = &ctx->camera.last_cursor_pos;
     float x = pos->x * aspect / ctx->window_size.y * 2 - 1;
     float y = 1 - pos->y / ctx->window_size.y * 2;
@@ -259,7 +258,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
 
     upd_view_mat(ctx);
 
-    glfwSetCursorPos(window, ctx->window_size.x / 2, ctx->window_size.y / 2);
+    glfwSetCursorPos(window, ctx->window_center[0], ctx->window_center[1]);
 }
 
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
@@ -291,6 +290,8 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 void window_size_callback(GLFWwindow *window, int width, int height) {
     struct Context *ctx = glfwGetWindowUserPointer(window);
     glViewport(0, 0, width, height);
-    ctx->window_size = vector2_new(width, height);
+    ctx->window_size = vector4_new(width, height, (float) width / height, (float) height / width);
+    ctx->window_center[0] = width / 2;
+    ctx->window_center[1] = height / 2;
     upd_projection_mat(ctx);
 }

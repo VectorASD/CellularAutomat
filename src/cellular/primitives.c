@@ -46,7 +46,7 @@ void init_primitives(struct Context *ctx) {
 
 void add_vertex_node(struct Context *ctx, struct VertexList *list, GLfloat x, GLfloat y, GLfloat z, vec4 *color) {
     struct Primitives *prim = &ctx->prim;
-    GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
+    GLfloat aspect = ctx->window_size.w;
     x = x * aspect / 600 * 2 - 1;
     y = 1 - y / 600 * 2;
     struct VertexNode orig = {NULL, x, y, z, color->x, color->y, color->z, color->w, prim->btn_id, prim->btn_callback, prim->glyph, prim->glyph_height};
@@ -417,7 +417,7 @@ void render_glyphs(struct Context *ctx) {
     struct VertexList *list = &font->glyphs;
     struct VertexNode *p = list->first;
 
-    GLfloat aspect = ctx->window_size.y / ctx->window_size.x;
+    GLfloat aspect = ctx->window_size.w;
     vec4 pred_color = vector4_new(-1, -1, -1, -1);
 
     glUseProgram(font->font_program);

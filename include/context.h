@@ -150,7 +150,8 @@ struct Context {
     byte fps_view_n;
     
     byte keys[1024];
-    vec2 window_size;
+    vec4 window_size;
+    GLint window_center[2];
     byte mouse_lock_mode;
     short btn_id_press[8];
     short btn_id_release[8];
