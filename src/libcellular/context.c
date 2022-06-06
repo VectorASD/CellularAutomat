@@ -6,9 +6,10 @@
 
 void load_context(struct Context *ctx) {
     struct Settings *set = &ctx->settings;
-    struct Camera *camera = &ctx->camera;
     set->polygon_mod = 0;
     set->user_input_dbg = 0;
+
+    struct Camera *camera = &ctx->camera;
     camera->pos = vector3_new(0, 2, 3);
     camera->front = vector3_new(0, 0, -1);
     camera->up = vector3_new(0, 1, 0);
@@ -17,10 +18,18 @@ void load_context(struct Context *ctx) {
     camera->yaw = -90;
     camera->pitch = 0;
     camera->sensitivity = 0.2;
+
     for (short i = 0; i < 1024; i++) ctx->keys[i] = 0;
-    ctx->delta_time = 0;
-    ctx->last_frame_time = 0;
-    ctx->lock_mouse_mode = 0;
+    for (int key = 0; key < 8; key++) {
+        ctx->btn_id_press[key] = -1;
+        ctx->btn_id_release[key] = -1;
+        ctx->btn_mouse_pressed[key] = 0;
+        ctx->btn_mouse_clicked[key] = 0;
+    }
+    ctx->mouse_lock_mode = 0;
+    ctx->mouse_pressed = 0;
+    ctx->lock_mouse = 0;
+
     ctx->scenes = NULL;
     ctx->last_scene = NULL;
     ctx->current_scene = NULL;
@@ -28,15 +37,14 @@ void load_context(struct Context *ctx) {
     ctx->models = NULL;
     ctx->last_model = NULL;
     ctx->models_n = 0;
+    ctx->hovered_part = NULL;
+
     srand(time(NULL));
+    ctx->time_delta = 0;
+    ctx->last_frame_time = 0;
     for (int i = 0; i < 6 * 64; i++) ctx->fps_view[0][i] = 0;
     ctx->fps_view_n = 0;
-    for (int key = 0; key < 8; key++) {
-        ctx->btn_id_press[key] = -1;
-        ctx->btn_id_release[key] = -1;
-        ctx->btn_mouse_pressed[key] = 0;
-    }
-    ctx->mouse_pressed = 0;
+
     struct Menus *menus = &ctx->menus;
     menus->show_menu = 0;
     menus->show_menu2 = 0;
@@ -55,7 +63,7 @@ void upd_view_mat(struct Context *ctx) {
 
 void do_movement(struct Context *ctx) {
     struct Camera *camera = &ctx->camera;
-    float speed = ctx->delta_time * camera->speed;
+    float speed = ctx->time_delta * camera->speed;
     if (ctx->keys[GLFW_KEY_LEFT_SHIFT]) speed *= 2;
     vec3 move = vector3_new(0, 0, 0);
     if (ctx->keys[GLFW_KEY_W]) move.x++;
@@ -71,6 +79,38 @@ void do_movement(struct Context *ctx) {
         if (move.y) camera->pos = vector3_add(camera->pos, vector3_mul_s(camera->up, speed * move.y));
         upd_view_mat(ctx);
     }
+}
+
+void update_SSBO(struct Context *ctx) {
+    struct SSBO {
+        GLint founded_id[2];
+        GLint buff_id[2];
+        GLfloat depth;
+        GLint yeah;
+    };
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ctx->ssbo);
+    struct SSBO *ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_WRITE);
+    memcpy(ptr->buff_id, ptr->founded_id, sizeof(GLint) * 2);
+    size_t addr = *(size_t *) ptr->founded_id;
+    ctx->hovered_part = (struct Part *) addr;
+    ptr->founded_id[0] = 0;
+    ptr->founded_id[1] = 0;
+    ptr->depth = 1;
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void context_tick(struct Context *ctx) {
+    do_movement(ctx);
+    update_SSBO(ctx);
+    if (ctx->lock_mouse && ctx->btn_mouse_clicked[0]) {
+        ctx->mouse_lock_mode = 1;
+        GLint empty_cursor[2] = {ctx->window_size.x / 2, ctx->window_size.y / 2};
+        glUniform1iv(ctx->cursor_pos_loc, 2, empty_cursor);
+        glfwSetInputMode(ctx->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+    for (int key = 0; key < 8; key++)
+        if (ctx->btn_mouse_clicked[key]) ctx->btn_mouse_clicked[key] = 0;
 }
 
 int randint(int a, int b) {
@@ -166,8 +206,8 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     if (set->user_input_dbg) printf("key: %3d   scancode: %2d   action: %d   mode: %2d\n", key, scancode, action, mode);
     if (action == GLFW_PRESS) {
         if (key == GLFW_KEY_ESCAPE) {
-            if (ctx->lock_mouse_mode) {
-                ctx->lock_mouse_mode = 0;
+            if (ctx->mouse_lock_mode) {
+                ctx->mouse_lock_mode = 0;
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             } else
                 glfwSetWindowShouldClose(window, GL_TRUE);
@@ -194,7 +234,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     struct Settings *set = &ctx->settings;
     struct Camera *camera = &ctx->camera;
     if (set->user_input_dbg) printf("xpos: %3lf   ypos: %3lf\n", xpos, ypos);
-    if (ctx->lock_mouse_mode == 0) {
+    if (ctx->mouse_lock_mode == 0) {
         camera->last_cursor_pos = vector2_new(xpos, ypos);
         GLint pos[2] = {xpos, ctx->window_size.y - 1 - ypos};
         glUniform1iv(ctx->cursor_pos_loc, 2, pos);
@@ -232,17 +272,13 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
         ctx->btn_mouse_pressed[button] = 1;
         ctx->mouse_pressed |= 1 << button;
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
-            if (ctx->lock_mouse_mode == 0 && btn_id == -1) {
-                ctx->lock_mouse_mode = 1;
-                GLint empty_cursor[2] = {-1, -1};
-                glUniform1iv(ctx->cursor_pos_loc, 2, empty_cursor);
-                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            }
+            if (ctx->mouse_lock_mode == 0 && btn_id == -1) ctx->lock_mouse = 1;
         }
     }
     if (action == GLFW_RELEASE) {
         ctx->btn_id_release[button] = btn_id;
         ctx->btn_mouse_pressed[button] = 0;
+        ctx->btn_mouse_clicked[button] = 1;
         if (ctx->mouse_pressed & 1 << button) ctx->mouse_pressed ^= 1 << button;
         if (btn_id >= 0 && btn_id == ctx->btn_id_press[button]) {
             void (*btn_callback)(struct Scene * scene, byte button) = get_button_callback_by_id(ctx, btn_id);

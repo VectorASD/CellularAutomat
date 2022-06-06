@@ -15,7 +15,7 @@ GLFWwindow *glfw_glew_init(struct Context *ctx) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
-    GLFWwindow *window = glfwCreateWindow(800, 600, "Cellular Automat by VectorASD & Mapyax", NULL, NULL);
+    GLFWwindow *window = ctx->window = glfwCreateWindow(800, 600, "Cellular Automat by VectorASD & Mapyax", NULL, NULL);
     if (window == NULL) {
         printf("Создание GLFW окна провалено\n");
         getchar();
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
     GLint empty_cursor[2] = {-1, -1};
     glUniform1iv(ctx.cursor_pos_loc, 2, empty_cursor);
 
-    GLint buffer[4] = {0, 0, 0, 0};
+    GLint buffer[6] = {0};
     glGenBuffers(1, &ctx.ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ctx.ssbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(buffer), buffer, GL_STREAM_DRAW);
@@ -104,24 +104,12 @@ int main(int argc, char *argv[]) {
 
     glClearColor(1, 0.8, 0.4, 0);
     do {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ctx.ssbo);
-        GLfloat ptr = 1;
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(GLint) * 2, sizeof(GLfloat), &ptr);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-        
-        /* ВСЁ НИКАК НЕ ПОЛУЧАЕТСЯ ВЫТАЩИТЬ СОДЕРЖИМОЕ SSBO ИЗ ВИДЕОКАРТЫ НА СТОРОНУ ПРОЦЕССОРА :///
-        //GLuint* data = (GLuint*) glMapNamedBuffer(3, GL_READ_ONLY);
-        printf("buffer: %u %u %u %u\n", buffer[0], buffer[1], buffer[2], buffer[3]);
-        //glUnmapNamedBuffer(3);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-        glUnmapBuffer(GL_ARRAY_BUFFER);*/
-
+        context_tick(&ctx);
         glfwPollEvents();
-        do_movement(&ctx);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         float time = ctx.time = glfwGetTime();
-        ctx.delta_time = time - ctx.last_frame_time;
+        ctx.time_delta = time - ctx.last_frame_time;
         ctx.last_frame_time = time;
         if ((int) time != pred_sec) {
             pred_sec = time;

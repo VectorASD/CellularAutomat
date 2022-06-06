@@ -59,8 +59,8 @@ void render_scene_0(struct Scene *scene) {
     part2->size = vector3_new(size, 5 - size, size);
     update_part(part2);
     // отличный пример, как сделать собатия не зависимыми от fps = мощности CPU и GPU в целом!
-    scene_ctx->timer += ctx->delta_time;
-    scene_ctx->timer2 += ctx->delta_time;
+    scene_ctx->timer += ctx->time_delta;
+    scene_ctx->timer2 += ctx->time_delta;
     while (scene_ctx->timer >= 1. / 64) {
         scene_ctx->timer -= 1. / 64;
         struct Part *rand_part = scene_ctx->parts[randint(0, 16 * 16 * 16 - 1)];
@@ -73,6 +73,15 @@ void render_scene_0(struct Scene *scene) {
             for (int z = 0; z < 16; z++)
                 for (int x = 0; x < 16; x++)
                     scene_ctx->parts[x + y * 16 + z * 256]->visible = ((x + t) % 4 == 0) + ((y + t) % 4 == 0) + ((z + t) % 4 == 0) >= 2;
+    }
+    if (ctx->hovered_part) {
+        struct Part *part = ctx->hovered_part;
+        part->orientation.x += ctx->time_delta;
+        part->orientation.y += ctx->time_delta * 2;
+        part->orientation.z += ctx->time_delta * 3;
+        update_part(part);
+        if (ctx->btn_mouse_clicked[0]) part->visible = 0;
+        ctx->lock_mouse = 0;
     }
 }
 

@@ -72,6 +72,7 @@ GLuint build_main_program() {
         uniform int part_id[2];
         layout(shared, binding = 3) buffer storage {
             int founded_id[2];
+            int buff_id[2];
             float depth;
             int yeah;
         };
@@ -92,10 +93,9 @@ GLuint build_main_program() {
                 founded_id = part_id;
                 depth = gl_FragCoord.z;
             }
-            if (part_id == founded_id) {
+            if (part_id == buff_id) {
 	        bool grid = int(gl_FragCoord.x / 3) % 2 + int(gl_FragCoord.y / 3) % 2 == 1;
                 color *= grid ? vec4(0.2, 0.5, 1, 0.5) : vec4(1, 1, 0, 0.5);
-                yeah++;
             }
         }
     )glsl";

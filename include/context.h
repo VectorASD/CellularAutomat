@@ -138,39 +138,47 @@ struct Menus {
 struct Context {
     struct Settings settings;
     struct Camera camera;
-    byte keys[1024];
+    struct Primitives prim;
+    struct Font font;
+    struct Menus menus;
+    
+    GLFWwindow *window;
     float time;
-    float delta_time;
+    float time_delta;
     float last_frame_time;
-    GLint projection_loc;
-    GLint view_loc;
-    GLint model_loc;
+    char fps_view[6][64];
+    byte fps_view_n;
+    
+    byte keys[1024];
     vec2 window_size;
-    byte lock_mouse_mode;
+    byte mouse_lock_mode;
+    short btn_id_press[8];
+    short btn_id_release[8];
+    byte btn_mouse_pressed[8];
+    byte btn_mouse_clicked[8];
+    byte mouse_pressed;
+    byte lock_mouse;
+    
     struct Scene *scenes;
     struct Scene *last_scene;
     struct Scene *current_scene;
     int scenes_n;
-    GLuint ssbo;
     struct Model *models;
     struct Model *last_model;
     int models_n;
+    GLuint ssbo;
+    struct Part *hovered_part;
+    
+    GLint projection_loc;
+    GLint view_loc;
+    GLint model_loc;
+    GLuint gui_program;
+    GLuint shader_program;
     GLint main_color_loc;
     GLint edge_color_loc;
     GLint color_mode_loc;
     GLint cursor_pos_loc;
     GLint part_id_loc;
-    GLuint gui_program;
-    GLuint shader_program;
-    struct Primitives prim;
-    struct Font font;
-    char fps_view[6][64];
-    byte fps_view_n;
-    short btn_id_press[8];
-    short btn_id_release[8];
-    short btn_mouse_pressed[8];
-    short mouse_pressed;
-    struct Menus menus;
 };
 
 void load_context(struct Context *ctx);
@@ -178,7 +186,7 @@ void load_context(struct Context *ctx);
 void upd_projection_mat(struct Context *ctx);
 void upd_view_mat(struct Context *ctx);
 
-void do_movement(struct Context *ctx);
+void context_tick(struct Context *ctx);
 
 int randint(int a, int b);
 
