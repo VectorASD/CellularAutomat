@@ -196,6 +196,8 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     if (set->user_input_dbg) printf("xpos: %3lf   ypos: %3lf\n", xpos, ypos);
     if (ctx->lock_mouse_mode == 0) {
         camera->last_cursor_pos = vector2_new(xpos, ypos);
+        GLint pos[2] = {xpos, ctx->window_size.y - 1 - ypos};
+        glUniform1iv(ctx->cursor_pos_loc, 2, pos);
         return;
     }
     xpos /= 20;
@@ -232,6 +234,8 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
             if (ctx->lock_mouse_mode == 0 && btn_id == -1) {
                 ctx->lock_mouse_mode = 1;
+                GLint empty_cursor[2] = {-1, -1};
+                glUniform1iv(ctx->cursor_pos_loc, 2, empty_cursor);
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             }
         }

@@ -61,12 +61,21 @@ GLuint build_main_program() {
     )glsl";
     text fragment_shader_source = R"glsl(
         #version 330 core
+        #extension GL_ARB_shader_storage_buffer_object : require
         in vec3 our_color;
         in vec3 pos;
         out vec4 color;
         uniform vec4 main_color;
         uniform vec4 edge_color;
         uniform int color_mode;
+        uniform int cursor_pos[2];
+        uniform int part_id[2];
+        layout(shared, binding = 3) buffer storage {
+            int founded_id[2];
+            float depth;
+            int yeah;
+        };
+        
         void main() {
             if (color_mode == 1 || color_mode == 3) color = main_color;
             else color = vec4(our_color, 1);
@@ -77,6 +86,17 @@ GLuint build_main_program() {
                 bool edge = edge_x + edge_y + edge_z >= 2;
                 if (edge) color = edge_color;
 	    }
+            float cursor_dist = length(gl_FragCoord.xy - vec2(cursor_pos[0], cursor_pos[1]));
+            if (cursor_dist < 10) color = vec4(1, 1, 1, 1); // У курсора есть теперь кружок
+            if (cursor_dist < 1 && gl_FragCoord.z <= depth) {
+                founded_id = part_id;
+                depth = gl_FragCoord.z;
+            }
+            if (part_id == founded_id) {
+	        bool grid = int(gl_FragCoord.x / 3) % 2 + int(gl_FragCoord.y / 3) % 2 == 1;
+                color *= grid ? vec4(0.2, 0.5, 1, 0.5) : vec4(1, 1, 0, 0.5);
+                yeah++;
+            }
         }
     )glsl";
     return build_program(vertex_shader_source, fragment_shader_source);

@@ -151,12 +151,15 @@ struct Context {
     struct Scene *last_scene;
     struct Scene *current_scene;
     int scenes_n;
+    GLuint ssbo;
     struct Model *models;
     struct Model *last_model;
     int models_n;
     GLint main_color_loc;
     GLint edge_color_loc;
     GLint color_mode_loc;
+    GLint cursor_pos_loc;
+    GLint part_id_loc;
     GLuint gui_program;
     GLuint shader_program;
     struct Primitives prim;

@@ -208,9 +208,15 @@ void render_part(struct Context *ctx, struct Part *part) {
     if (!part->visible) return;
     struct Model *model = part->used_model;
     matrix4_push(part->model_mat, ctx->model_loc);
+    
+    GLint ptr[2];
+    *(ulong*) ptr = (size_t) part;
+    glUniform1iv(ctx->part_id_loc, 2, ptr);
+    
     glUniform4fv(ctx->main_color_loc, 1, (GLfloat *) &part->color);
     glUniform4fv(ctx->edge_color_loc, 1, (GLfloat *) &part->edge_color);
     glUniform1i(ctx->color_mode_loc, part->color_mode);
+    
     glBindVertexArray(model->VAO);
     glDrawElements(GL_TRIANGLES, model->indices, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);

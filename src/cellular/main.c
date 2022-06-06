@@ -78,8 +78,20 @@ int main(int argc, char *argv[]) {
     ctx.main_color_loc = glGetUniformLocation(shader_program, "main_color");
     ctx.edge_color_loc = glGetUniformLocation(shader_program, "edge_color");
     ctx.color_mode_loc = glGetUniformLocation(shader_program, "color_mode");
+    ctx.cursor_pos_loc = glGetUniformLocation(shader_program, "cursor_pos");
+    ctx.part_id_loc = glGetUniformLocation(shader_program, "part_id");
     ctx.shader_program = shader_program;
     glUseProgram(shader_program);
+    GLint empty_cursor[2] = {-1, -1};
+    glUniform1iv(ctx.cursor_pos_loc, 2, empty_cursor);
+
+    GLint buffer[4] = {0, 0, 0, 0};
+    glGenBuffers(1, &ctx.ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ctx.ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(buffer), buffer, GL_STREAM_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ctx.ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
     upd_projection_mat(&ctx);
     upd_view_mat(&ctx);
     ctx.gui_program = build_gui_program();
@@ -90,8 +102,20 @@ int main(int argc, char *argv[]) {
     int pred_sec;
     int frames = 0;
 
-    glClearColor(0.4, 0.8, 1, 0);
+    glClearColor(1, 0.8, 0.4, 0);
     do {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ctx.ssbo);
+        GLfloat ptr = 1;
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(GLint) * 2, sizeof(GLfloat), &ptr);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+        
+        /* ВСЁ НИКАК НЕ ПОЛУЧАЕТСЯ ВЫТАЩИТЬ СОДЕРЖИМОЕ SSBO ИЗ ВИДЕОКАРТЫ НА СТОРОНУ ПРОЦЕССОРА :///
+        //GLuint* data = (GLuint*) glMapNamedBuffer(3, GL_READ_ONLY);
+        printf("buffer: %u %u %u %u\n", buffer[0], buffer[1], buffer[2], buffer[3]);
+        //glUnmapNamedBuffer(3);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+        glUnmapBuffer(GL_ARRAY_BUFFER);*/
+
         glfwPollEvents();
         do_movement(&ctx);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
