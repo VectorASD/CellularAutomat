@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
     int pred_sec;
     int frames = 0;
 
-    glClearColor(1, 0.8, 0.4, 0);
+    glClearColor(1, 0.8, 0.6, 0);
     do {
         context_tick(&ctx);
         glfwPollEvents();
