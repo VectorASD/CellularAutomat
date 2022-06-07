@@ -113,7 +113,7 @@ void context_tick(struct Context *ctx) {
 }
 
 int randint(int a, int b) {
-    return rand() % (b - a + 1) - a;
+    return rand() % (b - a + 1) + a;
 }
 
 float min(float a, float b) {

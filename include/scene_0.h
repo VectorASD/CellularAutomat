@@ -1,3 +1,5 @@
+#pragma once
+
 #include <scenes.h>
 
 void init_scene_0(struct Scene *scene);

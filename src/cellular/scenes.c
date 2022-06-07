@@ -169,6 +169,16 @@ void init_models(struct Context *ctx) {
         indices[i_pos++] = ver_c + yaw_deg % quality2 + 1;
     }
     add_model(ctx, create_model("сфера", 6 * vertexes_n, 3 * indices_n, vertexes, indices));
+
+    GLfloat panel_vertexes[] = {
+        -1, -1, 0, 1, 0, 0,
+        1, -1, 0, 0, 1, 0,
+        -1, 1, 0, 0, 0, 1,
+        1, 1, 0, 1, 1, 0};
+    GLuint panel_indices[] = {
+        0, 1, 2, 0, 2, 1,
+        1, 2, 3, 1, 3, 2};
+    add_model(ctx, create_model("панель", 6 * 4, 3 * 4, panel_vertexes, panel_indices));
 }
 
 //
@@ -291,6 +301,11 @@ void open_scene0_callback(struct Scene *scene, byte button) {
     struct Context *ctx = scene->ctx;
     select_scene(ctx, 0);
 }
+void open_scene1_callback(struct Scene *scene, byte button) {
+    if (button) return;
+    struct Context *ctx = scene->ctx;
+    select_scene(ctx, 1);
+}
 
 void first_menu_body(struct Context *ctx) {
     struct Menus *menus = &ctx->menus;
@@ -305,7 +320,7 @@ void first_menu_body(struct Context *ctx) {
         set_button_color(ctx, 128, 0, 255, 0, 0, 255, 255);
         set_text_color(ctx, 255, 128, 0, 255);
         struct Scene *p = ctx->scenes;
-        void *open_scene_callbacks[] = {open_scene0_callback};
+        void *open_scene_callbacks[] = {open_scene0_callback, open_scene1_callback};
         int n = 0;
         while (p) {
             draw_button(ctx, 10, 42 + n * 32, width - 20, 32, open_scene_callbacks[n], p->name);
@@ -353,6 +368,13 @@ void global_gui(struct Context *ctx) {
         first_menu_body(ctx);
         menu2_body(ctx);
     }
+    set_text_alignment(ctx, 0, 2, 0);
+    set_text_color(ctx, 0, 128, 255, 255);
+    if (scene == ctx->scenes) {
+        for (int i = 0; i < 6; i++)
+            render_text(ctx, ctx->fps_view[(ctx->fps_view_n + i) % 6], 5, 600 - 15 * (5 - i), 15);
+    } else
+        render_text(ctx, ctx->fps_view[(ctx->fps_view_n + 5) % 6], 5, 600, 15);
     render_primitives(ctx);
 }
 
