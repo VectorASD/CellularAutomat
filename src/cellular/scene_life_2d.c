@@ -2,7 +2,6 @@
 #include <scene_life_2d.h>
 
 void init_scene_life_2d(struct Scene *scene) {
-    printf("A\n");
     struct Context *ctx = scene->ctx;
     struct Life2dContext *scene_ctx = malloc(sizeof(struct Life2dContext));
 

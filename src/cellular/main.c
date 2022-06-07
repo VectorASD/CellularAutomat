@@ -129,7 +129,6 @@ int main(int argc, char *argv[]) {
         glfwSwapBuffers(window);
         frames++;
     } while (glfwWindowShouldClose(window) == 0);
-
     glDeleteProgram(shader_program);
     glDeleteProgram(ctx.gui_program);
     glDeleteProgram(ctx.font.font_program);

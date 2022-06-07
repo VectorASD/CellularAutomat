@@ -397,7 +397,7 @@ void free_scenes(struct Context *ctx) {
     struct Scene *p = ctx->scenes, *next;
     while (p) {
         next = p->next;
-        if (p->free != NULL) p->free(p);
+        if (p->free != NULL && !p->first_tick) p->free(p);
         if (p->user_pointer != NULL) free(p->user_pointer);
         free_parts(p);
         free(p);

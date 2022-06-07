@@ -4,10 +4,10 @@
 
 struct Map {
     struct Map *up, *left, *right, *down;
-    int x;
-    int y;
+    int x, y;
     byte type;
     struct Part *part;
+    byte neighbours;
 };
 
 struct Life2dContext {

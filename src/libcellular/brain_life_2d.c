@@ -1,4 +1,5 @@
 #include <brain_life_2d.h>
+#include <math.h>
 
 struct Map *create_map_item(struct Life2dContext *ctx, int x, int y) {
     struct Part *part = NULL;
@@ -6,11 +7,11 @@ struct Map *create_map_item(struct Life2dContext *ctx, int x, int y) {
         part = ctx->create_part(ctx->ctx, ctx->panel);
         part->pos = vector3_new(x, 0, -y);
         part->orientation.x = radians(90);
-        part->color = vector4_new(x / 64., y / 64., 1, 1);
+        part->color = vector4_new(sin(x / 7.) / 8 + 0.5, sin(y / 11.) / 8 + 0.5, 1, 1);
         part->visible = 0;
         ctx->update_part(part);
     }
-    struct Map map = {NULL, NULL, NULL, NULL, x, y, 0, part};
+    struct Map map = {NULL, NULL, NULL, NULL, x, y, 0, part, 0};
     struct Map *res = malloc(sizeof(struct Map));
     memcpy(res, &map, sizeof(struct Map));
     return res;
@@ -53,6 +54,15 @@ void fill_cell(struct Life2dContext *ctx, int x, int y) {
     if (map->type == 1) return;
     map->type = 1;
     if (map->part) map->part->visible = 1;
+    for (int dy = -1; dy < 2; dy++)
+        for (int dx = -1; dx < 2; dx++)
+            if (dx || dy) {
+                byte *neighbours = &l2d_get_cell(ctx, x + dx, y + dy)->neighbours;
+                if (*neighbours)
+                    (*neighbours) <<= 1;
+                else
+                    *neighbours = 1;
+            }
 }
 
 void original_map(struct Life2dContext *ctx) {
@@ -62,18 +72,26 @@ void original_map(struct Life2dContext *ctx) {
             if (randint(0, 1)) fill_cell(ctx, x, y);
 }
 
-void game_life(struct Life2dContext *ctx) {
-    const int Ncells = 50;
-    int neighbours[Ncells * 2][Ncells * 2];
-    for (int x = -Ncells; x < Ncells; x++)
-        for (int y = -Ncells; y < Ncells; y++)
-            for (int dy = -1; dy < 2; dy++)
-                for (int dx = -1; dx < 2; dx++)
-                    if (dx || dy)
-                        if (l2d_get_cell(ctx, x + dx, y + dy)->type == 0)
-                            neighbours[x][y] += 1;
+void enumeratiun_map(struct Life2dContext *ctx, struct Map *map) {
+    if (map == NULL) return;
+    enumeratiun_map(ctx, map->up);
+    enumeratiun_map(ctx, map->left);
+    enumeratiun_map(ctx, map->right);
+    enumeratiun_map(ctx, map->down);
+    byte birth_rule__ = 0b00000010;   // рождаются при 2 соседях
+    byte survive_rule = 0b00000110; // выживают при 2 или 3 соседях
+    if (map->type == 0 && map->neighbours & birth_rule__) {
+        map->part->color = vector4_new(0, 1, 0, 1);
+        map->part->visible = 1;
+    } else if (map->type == 1 && !(map->neighbours & survive_rule)) {
+        map->part->color = vector4_new(1, 0, 0, 1);
+    }
+}
 
-    for (int x = -Ncells; x < Ncells; x++) {
+void game_life(struct Life2dContext *ctx) {
+    enumeratiun_map(ctx, ctx->map);
+
+    /*for (int x = -Ncells; x < Ncells; x++) {
         for (int y = -Ncells; y < Ncells; y++) {
             if (neighbours[x][y] < 2) {
                 //white_cell(ctx, x, y);
@@ -83,5 +101,5 @@ void game_life(struct Life2dContext *ctx) {
                 //white_cell(ctx, x, y);
             }
         }
-    }
+    }*/
 }
