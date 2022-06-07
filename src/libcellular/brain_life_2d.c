@@ -11,9 +11,10 @@ struct Map *create_map_item(struct Life2dContext *ctx, int x, int y) {
         part->visible = 0;
         ctx->update_part(part);
     }
-    struct Map map = {NULL, NULL, NULL, NULL, x, y, 0, part, 0};
+    struct Map map = {NULL, NULL, NULL, NULL, x, y, 0, part, 0, 0};
     struct Map *res = malloc(sizeof(struct Map));
     memcpy(res, &map, sizeof(struct Map));
+    ctx->map_size++;
     return res;
 }
 
@@ -29,7 +30,9 @@ void l2d_free_map(struct Map *map) {
 struct Map *l2d_get_cell(struct Life2dContext *ctx, int x, int y) {
     if (ctx->map == NULL) return ctx->map = create_map_item(ctx, x, y);
     struct Map *p = ctx->map;
+    int level = 1;
     while (1) {
+        if (level > ctx->map_height) ctx->map_height = level;
         if (p->x == x && p->y == y) return p;
         if (p->y < y)
             if (p->x < x) {
@@ -46,60 +49,73 @@ struct Map *l2d_get_cell(struct Life2dContext *ctx, int x, int y) {
             if (p->down == NULL) return p->down = create_map_item(ctx, x, y);
             p = p->down;
         }
+        level++;
     }
 }
 
-void fill_cell(struct Life2dContext *ctx, int x, int y) {
-    struct Map *map = l2d_get_cell(ctx, x, y);
+void fill_cell(struct Life2dContext *ctx, struct Map *map) {
     if (map->type == 1) return;
     map->type = 1;
     if (map->part) map->part->visible = 1;
-    for (int dy = -1; dy < 2; dy++)
-        for (int dx = -1; dx < 2; dx++)
+    int x = map->x, y = map->y;
+    for (int dy = -1; dy <= 1; dy++)
+        for (int dx = -1; dx <= 1; dx++)
             if (dx || dy) {
-                byte *neighbours = &l2d_get_cell(ctx, x + dx, y + dy)->neighbours;
-                if (*neighbours)
-                    (*neighbours) <<= 1;
-                else
-                    *neighbours = 1;
+                map = l2d_get_cell(ctx, x + dx, y + dy);
+                map->neighbours = map->neighbours ? map->neighbours << 1 : 1;
             }
+}
+
+void remove_cell(struct Life2dContext *ctx, struct Map *map) {
+    if (map->type == 0) return;
+    map->type = 0;
+    if (map->part) map->part->visible = 0;
+    int x = map->x, y = map->y;
+    for (int dy = -1; dy <= 1; dy++)
+        for (int dx = -1; dx <= 1; dx++)
+            if (dx || dy) {
+                map = l2d_get_cell(ctx, x + dx, y + dy);
+                map->neighbours >>= 1;
+            }
+}
+
+void save_neighbours(struct Map *map) {
+    if (map == NULL) return;
+    save_neighbours(map->up);
+    save_neighbours(map->left);
+    save_neighbours(map->right);
+    save_neighbours(map->down);
+    map->neighbours2 = map->neighbours;
 }
 
 void original_map(struct Life2dContext *ctx) {
     const int Ncells = 50;
     for (int y = -Ncells; y < Ncells; y++)
         for (int x = -Ncells; x < Ncells; x++)
-            if (randint(0, 1)) fill_cell(ctx, x, y);
+            if (randint(0, 1)) fill_cell(ctx, l2d_get_cell(ctx, x, y));
+
+    save_neighbours(ctx->map);
+    ctx->step++;
 }
 
-void enumeratiun_map(struct Life2dContext *ctx, struct Map *map) {
+void enumeration_map(struct Life2dContext *ctx, struct Map *map) {
     if (map == NULL) return;
-    enumeratiun_map(ctx, map->up);
-    enumeratiun_map(ctx, map->left);
-    enumeratiun_map(ctx, map->right);
-    enumeratiun_map(ctx, map->down);
-    byte birth_rule__ = 0b00000010;   // рождаются при 2 соседях
+    enumeration_map(ctx, map->up);
+    enumeration_map(ctx, map->left);
+    enumeration_map(ctx, map->right);
+    enumeration_map(ctx, map->down);
+    byte birth_rule__ = 0b00000100; // рождаются при 3 соседях
     byte survive_rule = 0b00000110; // выживают при 2 или 3 соседях
-    if (map->type == 0 && map->neighbours & birth_rule__) {
-        map->part->color = vector4_new(0, 1, 0, 1);
-        map->part->visible = 1;
-    } else if (map->type == 1 && !(map->neighbours & survive_rule)) {
-        map->part->color = vector4_new(1, 0, 0, 1);
+    int neighbours = map->neighbours2;
+    if (map->type == 0 && neighbours & birth_rule__) {
+        fill_cell(ctx, map);
+    } else if (map->type == 1 && !(neighbours & survive_rule)) {
+        remove_cell(ctx, map);
     }
 }
 
 void game_life(struct Life2dContext *ctx) {
-    enumeratiun_map(ctx, ctx->map);
-
-    /*for (int x = -Ncells; x < Ncells; x++) {
-        for (int y = -Ncells; y < Ncells; y++) {
-            if (neighbours[x][y] < 2) {
-                //white_cell(ctx, x, y);
-            } else if (neighbours[x][y] == 3) {
-                //create_cell(ctx, x, y);
-            } else if (neighbours[x][y] > 3) {
-                //white_cell(ctx, x, y);
-            }
-        }
-    }*/
+    enumeration_map(ctx, ctx->map);
+    save_neighbours(ctx->map);
+    ctx->step++;
 }

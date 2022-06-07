@@ -51,7 +51,7 @@ void load_context(struct Context *ctx) {
 }
 
 void upd_projection_mat(struct Context *ctx) {
-    mat4 projection = perspective(radians(90), ctx->window_size.z, 0.1, 100);
+    mat4 projection = perspective(radians(90), ctx->window_size.z, 0.1, 10000);
     matrix4_push(projection, ctx->projection_loc);
 }
 

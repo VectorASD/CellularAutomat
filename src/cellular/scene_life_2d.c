@@ -11,6 +11,8 @@ void init_scene_life_2d(struct Scene *scene) {
     scene_ctx->timer = 0;
     scene_ctx->create_part = create_part;
     scene_ctx->update_part = update_part;
+    scene_ctx->step = 0;
+    scene_ctx->map_size = scene_ctx->map_height = 0;
 
     original_map(scene_ctx);
 
@@ -20,13 +22,17 @@ void init_scene_life_2d(struct Scene *scene) {
 void render_scene_life_2d(struct Scene *scene) {
     struct Life2dContext *ctx = scene->user_pointer;
 
-    float *timer = &ctx->timer;
-    (*timer) += scene->ctx->time_delta;
-    int speed = 1;
+    ctx->timer += scene->ctx->time_delta;
+    ctx->timer2 += scene->ctx->time_delta;
+    int speed = 100;
     float frequency = 1. / speed;
-    while (*timer >= frequency) {
+    while (ctx->timer >= frequency) {
         game_life(ctx);
-        (*timer) -= frequency;
+        ctx->timer -= frequency;
+    }
+    while (ctx->timer2 >= 1) {
+        printf("map_size: %8u    map_height: %8u     %s\n", ctx->map_size, ctx->map_height, ctx->map_height >= 1000 ? "!!!" : "");
+        ctx->timer2 -= 1;
     }
 }
 

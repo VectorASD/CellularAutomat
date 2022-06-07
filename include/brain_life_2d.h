@@ -8,15 +8,18 @@ struct Map {
     byte type;
     struct Part *part;
     byte neighbours;
+    byte neighbours2;
 };
 
 struct Life2dContext {
     struct Map *map;
     struct Model *panel;
     struct Context *ctx;
-    float timer;
+    float timer, timer2;
     struct Part *(*create_part)(struct Context *ctx, struct Model *model);
     void (*update_part)(struct Part *part);
+    int step;
+    int map_size, map_height;
 };
 
 struct Map *create_map_item(struct Life2dContext *ctx, int x, int y);
