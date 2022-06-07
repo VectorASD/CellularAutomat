@@ -246,10 +246,16 @@ void delete_part(struct Part *part) {
     struct Part *pred_part = part->pred, *next = part->next;
     if (pred_part == NULL) {
         scene->parts = next;
-        if (next == NULL) scene->last_part = NULL;
+        if (next)
+            next->pred = NULL;
+        else
+            scene->last_part = NULL;
     } else {
         pred_part->next = next;
-        if (next == NULL) scene->last_part = pred_part;
+        if (next)
+            next->pred = pred_part;
+        else
+            scene->last_part = pred_part;
     }
     free(part);
     scene->parts_n--;
