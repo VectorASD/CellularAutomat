@@ -69,6 +69,7 @@ struct VertexNode {
     GLfloat x, y, z, r, g, b, a;
     short btn_id;
     void (*btn_callback)(struct Scene *scene, byte button);
+    void *btn_attr;
     struct Character *glyph;
     GLfloat glyph_height;
 };
@@ -93,6 +94,7 @@ struct Primitives {
     vec4 tri_color4;
     int all_prims_n;
     short btn_id;
+    void *btn_attr;
     short buttons;
     void (*btn_callback)(struct Scene *scene, byte button);
     struct Character *glyph;
@@ -169,6 +171,7 @@ struct Context {
     int models_n;
     GLuint ssbo;
     struct Part *hovered_part;
+    void *btn_attr;
     
     GLint projection_loc;
     GLint view_loc;

@@ -133,11 +133,11 @@ void gui_scene_0(struct Scene *scene) {
     render_text(ctx, "1234567890.,АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ\nабвгдеёжзийклмнопрстуфхцчшщъыьэюя!()-+_=:;|~/\\", 5, 5, 24);
 
     set_button_color(ctx, 255, 255, 0, 0, 0, 255, 255);
-    draw_button(ctx, 100, 100, 100, 64, btn_callback_0, "A");
+    draw_button(ctx, 100, 100, 100, 64, btn_callback_0, "A", NULL);
     set_button_color(ctx, 0, 255, 0, 255, 0, 255, 255);
-    draw_button(ctx, 100, 170, 100, 64, btn_callback_1, "B");
+    draw_button(ctx, 100, 170, 100, 64, btn_callback_1, "B", NULL);
 
     set_button_color(ctx, 0, 128, 255, 0, 0, 255, 255);
     set_text_color(ctx, 0, 255, 0, 255);
-    draw_button(ctx, 300, 450, 100, 64, btn_callback_2, "Yeaherson");
+    draw_button(ctx, 300, 450, 100, 64, btn_callback_2, "Yeaherson", NULL);
 }

@@ -38,6 +38,7 @@ void init_primitives(struct Context *ctx) {
     prim->btn_id = -1;
     prim->buttons = 0;
     prim->btn_callback = NULL;
+    prim->btn_attr = NULL;
     prim->glyph = NULL;
     prim->glyph_height = 0;
 
@@ -49,7 +50,7 @@ void add_vertex_node(struct Context *ctx, struct VertexList *list, GLfloat x, GL
     GLfloat aspect = ctx->window_size.w;
     x = x * aspect / 600 * 2 - 1;
     y = 1 - y / 600 * 2;
-    struct VertexNode orig = {NULL, x, y, z, color->x, color->y, color->z, color->w, prim->btn_id, prim->btn_callback, prim->glyph, prim->glyph_height};
+    struct VertexNode orig = {NULL, x, y, z, color->x, color->y, color->z, color->w, prim->btn_id, prim->btn_callback, prim->btn_attr, prim->glyph, prim->glyph_height};
     if (list->first == NULL) {
         struct VertexNode *vertex = malloc(sizeof(struct VertexNode));
         memcpy(vertex, &orig, sizeof(struct VertexNode));
@@ -531,10 +532,11 @@ void draw_btn_rect(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLf
     add_vertex_node(ctx, lines, x2 + 1, y2, id, &prim->line_color2);
 }
 
-void draw_button(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat height, void (*btn_callback)(struct Scene *scene, byte button), text str) {
+void draw_button(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLfloat height, void (*btn_callback)(struct Scene *scene, byte button), text str, void *attr) {
     struct Primitives *prim = &ctx->prim;
     prim->btn_id = prim->buttons++;
     prim->btn_callback = btn_callback;
+    prim->btn_attr = attr;
     GLfloat w2 = width / 2, h2 = height / 2;
     vec4 color = prim->tri_color, color2 = prim->tri_color2, color3 = prim->tri_color3, color4 = prim->tri_color4;
     prim->tri_color3 = color;
@@ -548,6 +550,7 @@ void draw_button(struct Context *ctx, GLfloat x, GLfloat y, GLfloat width, GLflo
     draw_btn_rect(ctx, x, y, width, height);
     prim->btn_id = -1;
     prim->btn_callback = NULL;
+    prim->btn_attr = NULL;
 
     struct Font *font = &ctx->font;
     byte tmp = font->align_left, tmp2 = font->align_up;

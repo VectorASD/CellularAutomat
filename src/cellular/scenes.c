@@ -296,15 +296,10 @@ void expand_menu_callback(struct Scene *scene, byte button) {
     menus->show_menu = !menus->show_menu;
 }
 
-void open_scene0_callback(struct Scene *scene, byte button) {
+void open_scene_callback(struct Scene *scene, byte button) {
     if (button) return;
     struct Context *ctx = scene->ctx;
-    select_scene(ctx, 0);
-}
-void open_scene1_callback(struct Scene *scene, byte button) {
-    if (button) return;
-    struct Context *ctx = scene->ctx;
-    select_scene(ctx, 1);
+    select_scene(ctx, (size_t) ctx->btn_attr);
 }
 
 void first_menu_body(struct Context *ctx) {
@@ -320,17 +315,16 @@ void first_menu_body(struct Context *ctx) {
         set_button_color(ctx, 128, 0, 255, 0, 0, 255, 255);
         set_text_color(ctx, 255, 128, 0, 255);
         struct Scene *p = ctx->scenes;
-        void *open_scene_callbacks[] = {open_scene0_callback, open_scene1_callback};
         int n = 0;
         while (p) {
-            draw_button(ctx, 10, 42 + n * 32, width - 20, 32, open_scene_callbacks[n], p->name);
+            draw_button(ctx, 10, 42 + n * 32, width - 20, 32, open_scene_callback, p->name, (void*)(size_t) n);
             p = p->next;
             n++;
         }
     }
     set_button_color(ctx, 0, 128, 255, 0, 0, 255, 255);
     set_text_color(ctx, 255, 255, 0, 255);
-    draw_button(ctx, 0, 0, width, 32, expand_menu_callback, "Сцены");
+    draw_button(ctx, 0, 0, width, 32, expand_menu_callback, "Сцены", NULL);
 }
 
 void expand_menu2_callback(struct Scene *scene, byte button) {
@@ -354,11 +348,11 @@ void menu2_body(struct Context *ctx) {
 
         set_button_color(ctx, 128, 0, 255, 0, 0, 255, 255);
         set_text_color(ctx, 255, 128, 0, 255);
-        draw_button(ctx, margin + 10, 42, (width - 20) / 3, 32, expand_menu2_callback, ";'-}");
+        draw_button(ctx, margin + 10, 42, (width - 20) / 3, 32, expand_menu2_callback, ";'-}", NULL);
     }
     set_button_color(ctx, 0, 128, 255, 0, 0, 255, 255);
     set_text_color(ctx, 255, 255, 0, 255);
-    draw_button(ctx, margin, 0, width, 32, expand_menu2_callback, "Настройки");
+    draw_button(ctx, margin, 0, width, 32, expand_menu2_callback, "Настройки", NULL);
 }
 
 void global_gui(struct Context *ctx) {

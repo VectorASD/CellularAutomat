@@ -176,13 +176,13 @@ short calculate_hovered_button(struct Context *ctx, byte use_dropped_n) {
     return id;
 }
 
-void *get_button_callback_by_id(struct Context *ctx, short btn_id) {
+struct VertexNode *get_button_by_id(struct Context *ctx, short btn_id) {
     struct Primitives *prim = &ctx->prim;
     struct VertexList *list = &prim->triangles;
     struct VertexNode *p = list->first;
     int triangles_n = list->dropped_n;
     for (int i = 0; i < triangles_n; i++) {
-        if (p->btn_id == btn_id) return p->btn_callback;
+        if (p->btn_id == btn_id) return p;
         p = p->next;
     }
     return NULL;
@@ -280,7 +280,9 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
         ctx->btn_mouse_clicked[button] = 1;
         if (ctx->mouse_pressed & 1 << button) ctx->mouse_pressed ^= 1 << button;
         if (btn_id >= 0 && btn_id == ctx->btn_id_press[button]) {
-            void (*btn_callback)(struct Scene * scene, byte button) = get_button_callback_by_id(ctx, btn_id);
+            struct VertexNode *btn = get_button_by_id(ctx, btn_id);
+            void (*btn_callback)(struct Scene * scene, byte button) = btn->btn_callback;
+            ctx->btn_attr = btn->btn_attr;
             btn_callback(ctx->current_scene, button);
         }
         ctx->btn_id_press[button] = -1;
