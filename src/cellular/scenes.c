@@ -317,7 +317,7 @@ void first_menu_body(struct Context *ctx) {
         struct Scene *p = ctx->scenes;
         int n = 0;
         while (p) {
-            draw_button(ctx, 10, 42 + n * 32, width - 20, 32, open_scene_callback, p->name, (void*)(size_t) n);
+            draw_button(ctx, 10, 42 + n * 32, width - 20, 32, open_scene_callback, p->name, (void *) (size_t) n);
             p = p->next;
             n++;
         }
