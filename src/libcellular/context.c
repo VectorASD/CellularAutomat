@@ -51,7 +51,7 @@ void load_context(struct Context *ctx) {
 }
 
 void upd_projection_mat(struct Context *ctx) {
-    mat4 projection = perspective(radians(90), ctx->window_size.z, 0.1, 100);
+    mat4 projection = perspective(radians(90), ctx->window_size.z, 0.1, 10000);
     matrix4_push(projection, ctx->projection_loc);
 }
 
@@ -105,6 +105,7 @@ void context_tick(struct Context *ctx) {
     update_SSBO(ctx);
     if (ctx->lock_mouse && ctx->btn_mouse_clicked[0]) {
         ctx->mouse_lock_mode = 1;
+        ctx->lock_mouse = 0;
         glUniform1iv(ctx->cursor_pos_loc, 2, ctx->window_center);
         glfwSetInputMode(ctx->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }

@@ -1,5 +1,6 @@
 #include <scene_0.h>
 #include <scene_ant_2d.h>
+#include <scene_life_2d.h>
 #include <scenes.h>
 #include <shaders.h>
 #include <stdio.h>
@@ -71,7 +72,8 @@ int main(int argc, char *argv[]) {
     init_primitives(&ctx);
 
     bind_scene(&ctx, "Самая первая", init_scene_0, render_scene_0, gui_scene_0, NULL);
-    uint start_scene = bind_scene(&ctx, "Муравей Лэнгтона 2D", init_scene_ant_2d, render_scene_ant_2d, gui_scene_ant_2d, free_scene_ant_2d);
+    bind_scene(&ctx, "Муравей Лэнгтона 2D", init_scene_ant_2d, render_scene_ant_2d, gui_scene_ant_2d, free_scene_ant_2d);
+    uint start_scene = bind_scene(&ctx, "Игра <Жизнь> 2D", init_scene_life_2d, render_scene_life_2d, gui_scene_life_2d, free_scene_life_2d);
 
     select_scene(&ctx, start_scene);
 
@@ -127,7 +129,6 @@ int main(int argc, char *argv[]) {
         glfwSwapBuffers(window);
         frames++;
     } while (glfwWindowShouldClose(window) == 0);
-
     glDeleteProgram(shader_program);
     glDeleteProgram(ctx.gui_program);
     glDeleteProgram(ctx.font.font_program);
