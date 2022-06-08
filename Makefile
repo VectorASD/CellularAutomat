@@ -51,7 +51,7 @@ test: $(TEST_PATH)
 	./$(TEST_PATH)
 
 $(TEST_PATH): $(TEST_OBJ) $(LIB_PATH) $(FreeTypeLIB_PATH)
-	gcc $^ -o $@
+	gcc $^ -o $@ $(LFLAGS)
 
 $(TEST_OBJ):
 	gcc $(TEST_CFLAGS) -o $@ -c $(@:obj/test/%.o=test/%.c)
