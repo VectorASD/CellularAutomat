@@ -50,7 +50,7 @@ run: all
 test: $(TEST_PATH)
 	./$(TEST_PATH)
 
-$(TEST_PATH): $(TEST_OBJ) $(LIB_PATH)
+$(TEST_PATH): $(TEST_OBJ) $(LIB_PATH) $(FreeTypeLIB_PATH)
 	gcc $^ -o $@
 
 $(TEST_OBJ):
